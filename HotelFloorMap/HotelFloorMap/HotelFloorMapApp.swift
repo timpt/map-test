@@ -4,7 +4,7 @@ import SwiftUI
 struct HotelFloorMapApp: App {
     var body: some Scene {
         WindowGroup {
-            HotelMapView()
+            VenueFloorPlanView(venue: SampleData.venue)
         }
     }
 }

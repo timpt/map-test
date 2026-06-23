@@ -42,6 +42,6 @@ struct EventRow: View {
 
 #Preview {
     List {
-        EventRow(event: SampleData.grandHarbor.floors[0].spaces[1].events[0], now: .now)
+        EventRow(event: SampleData.venue.floors[0].spaces[1].events[0], now: .now)
     }
 }

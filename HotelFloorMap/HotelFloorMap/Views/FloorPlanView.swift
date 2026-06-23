@@ -95,7 +95,7 @@ private struct SpaceCell: View {
                 }
             }
             .overlay {
-                SpaceLabel(space: space, tint: tint)
+                SpaceLabel(space: space)
                     .padding(4)
             }
             .contentShape(RoundedRectangle(cornerRadius: 10))
@@ -104,7 +104,6 @@ private struct SpaceCell: View {
 
 private struct SpaceLabel: View {
     let space: Space
-    let tint: Color
 
     var body: some View {
         VStack(spacing: 3) {
@@ -151,7 +150,7 @@ private struct CountBadge: View {
 }
 
 #Preview {
-    FloorPlanView(floor: SampleData.grandHarbor.floors[0], now: .now) { _ in }
+    FloorPlanView(floor: SampleData.venue.floors[0], now: .now) { _ in }
         .frame(height: 500)
         .background(Color(.systemGroupedBackground))
 }

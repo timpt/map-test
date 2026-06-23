@@ -1,17 +1,21 @@
 import Foundation
 
-/// Hard-coded demo content. Events are anchored to *today* so that, depending on
-/// the time of day the app is run, some spaces show "live" events.
+/// Hard-coded demo content for a single event venue. Events are anchored to
+/// *today* so that, depending on the time of day the app is run, some spaces
+/// show "live" events.
 enum SampleData {
 
-    static let hotels: [Hotel] = [grandHarbor, summitLodge]
+    static let venue = Venue(
+        name: "Grand Harbor Event Center",
+        subtitle: "100 Embarcadero, San Francisco",
+        floors: [groundFloor, conferenceFloor]
+    )
 
     // MARK: - Time helpers
 
     /// A `Date` today at the given hour/minute in the user's calendar.
     private static func today(_ hour: Int, _ minute: Int = 0) -> Date {
-        let calendar = Calendar.current
-        return calendar.date(
+        Calendar.current.date(
             bySettingHour: hour,
             minute: minute,
             second: 0,
@@ -19,15 +23,7 @@ enum SampleData {
         ) ?? .now
     }
 
-    // MARK: - Grand Harbor Hotel
-
-    static let grandHarbor: Hotel = Hotel(
-        name: "Grand Harbor Hotel",
-        address: "100 Embarcadero, San Francisco, CA",
-        latitude: 37.7955,
-        longitude: -122.3937,
-        floors: [groundFloor, conferenceFloor]
-    )
+    // MARK: - Ground floor
 
     private static let groundFloor = Floor(
         level: 0,
@@ -40,18 +36,18 @@ enum SampleData {
                 capacity: 0
             ),
             Space(
-                name: "Harbor Restaurant",
+                name: "Harbor Hall",
                 kind: .restaurant,
                 rect: CGRect(x: 0.50, y: 0.06, width: 0.44, height: 0.30),
                 capacity: 120,
                 events: [
                     Event(
-                        title: "Breakfast Service",
+                        title: "Breakfast & Registration",
                         category: .banquet,
-                        start: today(7), end: today(10, 30),
-                        host: "Culinary Team",
+                        start: today(7), end: today(9, 30),
+                        host: "FinTech Forward",
                         attendeeCount: 80,
-                        notes: "Buffet-style breakfast for in-house guests."
+                        notes: "Buffet breakfast and badge pickup for attendees."
                     ),
                     Event(
                         title: "Wine Tasting Social",
@@ -102,6 +98,8 @@ enum SampleData {
             )
         ]
     )
+
+    // MARK: - Conference floor
 
     private static let conferenceFloor = Floor(
         level: 2,
@@ -189,89 +187,11 @@ enum SampleData {
                 capacity: 150,
                 events: [
                     Event(
-                        title: "Registration & Coffee",
+                        title: "Coffee & Networking Break",
                         category: .social,
                         start: today(8), end: today(9),
                         host: "FinTech Forward",
                         attendeeCount: 300
-                    )
-                ]
-            )
-        ]
-    )
-
-    // MARK: - Summit Lodge
-
-    static let summitLodge: Hotel = Hotel(
-        name: "Summit Lodge & Spa",
-        address: "8 Alpine Way, South Lake Tahoe, CA",
-        latitude: 38.9399,
-        longitude: -119.9772,
-        floors: [
-            Floor(
-                level: 1,
-                name: "Lodge Level",
-                spaces: [
-                    Space(
-                        name: "Aspen Ballroom",
-                        kind: .ballroom,
-                        rect: CGRect(x: 0.06, y: 0.06, width: 0.52, height: 0.46),
-                        capacity: 300,
-                        events: [
-                            Event(
-                                title: "Alpine Tech Retreat",
-                                category: .conference,
-                                start: today(9, 30), end: today(16),
-                                host: "Northstar Ventures",
-                                attendeeCount: 160,
-                                notes: "All-day offsite with breakout sessions."
-                            )
-                        ]
-                    ),
-                    Space(
-                        name: "Granite Boardroom",
-                        kind: .boardroom,
-                        rect: CGRect(x: 0.62, y: 0.06, width: 0.32, height: 0.22),
-                        capacity: 14,
-                        events: [
-                            Event(
-                                title: "Investor Update",
-                                category: .meeting,
-                                start: today(14), end: today(15),
-                                host: "Northstar Ventures",
-                                attendeeCount: 10
-                            )
-                        ]
-                    ),
-                    Space(
-                        name: "Spa & Wellness",
-                        kind: .fitness,
-                        rect: CGRect(x: 0.62, y: 0.32, width: 0.32, height: 0.20),
-                        capacity: 30,
-                        events: [
-                            Event(
-                                title: "Sunrise Yoga",
-                                category: .fitness,
-                                start: today(6, 30), end: today(7, 30),
-                                host: "Wellness Studio",
-                                attendeeCount: 20
-                            )
-                        ]
-                    ),
-                    Space(
-                        name: "Timberline Lounge",
-                        kind: .lounge,
-                        rect: CGRect(x: 0.06, y: 0.58, width: 0.88, height: 0.36),
-                        capacity: 90,
-                        events: [
-                            Event(
-                                title: "Après-Ski Reception",
-                                category: .social,
-                                start: today(17), end: today(19, 30),
-                                host: "Northstar Ventures",
-                                attendeeCount: 120
-                            )
-                        ]
                     )
                 ]
             )

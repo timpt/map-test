@@ -65,7 +65,7 @@ struct EventDetailView: View {
 #Preview {
     NavigationStack {
         EventDetailView(
-            event: SampleData.grandHarbor.floors[0].spaces[3].events[0],
+            event: SampleData.venue.floors[0].spaces[3].events[0],
             spaceName: "Pacific Ballroom",
             now: .now
         )

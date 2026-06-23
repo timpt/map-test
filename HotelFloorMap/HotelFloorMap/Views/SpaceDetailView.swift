@@ -101,5 +101,5 @@ private struct SpaceHeader: View {
 }
 
 #Preview {
-    SpaceDetailView(space: SampleData.grandHarbor.floors[0].spaces[1], now: .now)
+    SpaceDetailView(space: SampleData.venue.floors[0].spaces[1], now: .now)
 }
