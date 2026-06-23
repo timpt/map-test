@@ -1,14 +1,19 @@
 import SwiftUI
 
-/// Hard-coded demo content for a single event venue. Events are anchored to
-/// *today* so that, depending on the time of day the app is run, some spaces
-/// show "live" events.
+/// Demo content modeled on the **JW Marriott Reston Station** (Reston, VA).
+///
+/// Room names, sizes and the single-event-level layout are based on the
+/// venue's publicly listed event spaces (Luminary Ballroom, Jewel Box, Blank
+/// Canvas, ~40,000 sq ft on one level). Exact room geometry and the breakout
+/// "Studio" rooms are approximate — the official interactive floor plan isn't
+/// publicly available. Events are illustrative and anchored to *today* so that
+/// "live" highlighting reflects the actual time of day the app is run.
 enum SampleData {
 
     static let venue = Venue(
-        name: "Grand Harbor Event Center",
-        subtitle: "100 Embarcadero, San Francisco",
-        floors: [groundFloor, conferenceFloor]
+        name: "JW Marriott Reston Station",
+        subtitle: "1900 Reston Metro Plaza, Reston, VA",
+        floors: [eventLevel, lobbyLevel]
     )
 
     // MARK: - Time helpers
@@ -23,186 +28,238 @@ enum SampleData {
         ) ?? .now
     }
 
-    // MARK: - Ground floor
+    // MARK: - Event Level (~40,000 sq ft of meeting space, single level)
 
-    private static let groundFloor = Floor(
-        level: 0,
-        name: "Ground Floor",
+    private static let eventLevel = Floor(
+        level: 2,
+        name: "Event Level",
         spaces: [
-            // An L-shaped lobby wrapping around the elevator core — shows that
-            // spaces aren't limited to rectangles.
+            // Luminary Ballroom — divisible into three salons.
             Space(
-                name: "Main Lobby",
-                kind: .lobby,
-                polygon: [
-                    CGPoint(x: 0.06, y: 0.06),
-                    CGPoint(x: 0.46, y: 0.06),
-                    CGPoint(x: 0.46, y: 0.20),
-                    CGPoint(x: 0.24, y: 0.20),
-                    CGPoint(x: 0.24, y: 0.36),
-                    CGPoint(x: 0.06, y: 0.36)
-                ],
-                capacity: 0
-            ),
-            Space(
-                name: "Harbor Hall",
-                kind: .restaurant,
-                rect: CGRect(x: 0.50, y: 0.06, width: 0.44, height: 0.30),
-                capacity: 120,
+                name: "Luminary Salon I",
+                kind: .ballroom,
+                rect: CGRect(x: 0.05, y: 0.05, width: 0.29, height: 0.34),
+                capacity: 200,
                 events: [
                     Event(
-                        title: "Breakfast & Registration",
-                        category: .banquet,
-                        start: today(7), end: today(9, 30),
-                        host: "FinTech Forward",
-                        attendeeCount: 80,
-                        notes: "Buffet breakfast and badge pickup for attendees."
+                        title: "Northern Virginia Tech Summit",
+                        category: .conference,
+                        start: today(9), end: today(12),
+                        host: "NoVA Tech Council",
+                        attendeeCount: 180,
+                        notes: "Opening keynote and morning general sessions."
                     ),
                     Event(
-                        title: "Wine Tasting Social",
-                        category: .social,
-                        start: today(18), end: today(20),
-                        host: "Sommelier Guild",
-                        attendeeCount: 45,
-                        notes: "Featuring regional Napa Valley selections."
+                        title: "Innovation Awards Gala",
+                        category: .banquet,
+                        start: today(19), end: today(22, 30),
+                        host: "NoVA Tech Council",
+                        attendeeCount: 320,
+                        notes: "Seated dinner across the full Luminary Ballroom."
                     )
                 ]
             ),
             Space(
-                name: "Garden Lounge",
-                kind: .lounge,
-                rect: CGRect(x: 0.06, y: 0.42, width: 0.40, height: 0.30),
-                capacity: 60,
-                events: [
-                    Event(
-                        title: "Afternoon Networking",
-                        category: .social,
-                        start: today(15), end: today(17),
-                        host: "Bay Area Founders",
-                        attendeeCount: 50
-                    )
-                ]
-            ),
-            Space(
-                name: "Pacific Ballroom",
+                name: "Luminary Salon II",
                 kind: .ballroom,
-                rect: CGRect(x: 0.50, y: 0.42, width: 0.44, height: 0.52),
-                capacity: 400,
+                rect: CGRect(x: 0.355, y: 0.05, width: 0.29, height: 0.34),
+                capacity: 200,
                 events: [
                     Event(
-                        title: "Patel–Nguyen Wedding",
-                        category: .wedding,
-                        start: today(16), end: today(23),
-                        host: "Events by Aria",
-                        attendeeCount: 220,
-                        notes: "Ceremony at 4:30 PM, reception to follow."
+                        title: "Cloud Infrastructure Track",
+                        category: .conference,
+                        start: today(13), end: today(15, 30),
+                        host: "NoVA Tech Council",
+                        attendeeCount: 150,
+                        notes: "Afternoon breakout track."
                     )
                 ]
             ),
             Space(
-                name: "Back of House",
-                kind: .service,
-                rect: CGRect(x: 0.06, y: 0.78, width: 0.40, height: 0.16),
-                capacity: 0
+                name: "Luminary Salon III",
+                kind: .ballroom,
+                rect: CGRect(x: 0.66, y: 0.05, width: 0.29, height: 0.34),
+                capacity: 200,
+                events: [
+                    Event(
+                        title: "Sponsor & Vendor Expo",
+                        category: .social,
+                        start: today(10), end: today(16),
+                        host: "NoVA Tech Council",
+                        attendeeCount: 250,
+                        notes: "Exhibitor booths open throughout the day."
+                    )
+                ]
+            ),
+            // Pre-function space serving the ballroom.
+            Space(
+                name: "Grand Foyer",
+                kind: .lounge,
+                rect: CGRect(x: 0.05, y: 0.42, width: 0.90, height: 0.09),
+                capacity: 300,
+                events: [
+                    Event(
+                        title: "Registration & Coffee",
+                        category: .social,
+                        start: today(8), end: today(9),
+                        host: "NoVA Tech Council",
+                        attendeeCount: 400
+                    )
+                ]
+            ),
+            // Junior ballroom.
+            Space(
+                name: "Jewel Box",
+                kind: .ballroom,
+                rect: CGRect(x: 0.05, y: 0.55, width: 0.27, height: 0.25),
+                capacity: 250,
+                events: [
+                    Event(
+                        title: "Ramirez–Cole Wedding",
+                        category: .wedding,
+                        start: today(17), end: today(23),
+                        host: "Events by Lumen",
+                        attendeeCount: 160,
+                        notes: "Ceremony at 5:00 PM, reception to follow."
+                    )
+                ]
+            ),
+            Space(
+                name: "Blank Canvas",
+                kind: .meetingRoom,
+                rect: CGRect(x: 0.34, y: 0.55, width: 0.22, height: 0.25),
+                capacity: 80,
+                events: [
+                    Event(
+                        title: "Product Design Workshop",
+                        category: .workshop,
+                        start: today(10), end: today(13),
+                        host: "Studio North",
+                        attendeeCount: 45,
+                        notes: "Hands-on session — materials provided."
+                    )
+                ]
+            ),
+            Space(
+                name: "Studio A",
+                kind: .meetingRoom,
+                rect: CGRect(x: 0.58, y: 0.55, width: 0.17, height: 0.115),
+                capacity: 40,
+                events: [
+                    Event(
+                        title: "Investor Roundtable",
+                        category: .meeting,
+                        start: today(11), end: today(12, 30),
+                        host: "Meridian Ventures",
+                        attendeeCount: 24
+                    )
+                ]
+            ),
+            Space(
+                name: "Studio B",
+                kind: .meetingRoom,
+                rect: CGRect(x: 0.58, y: 0.675, width: 0.17, height: 0.125),
+                capacity: 40,
+                events: [
+                    Event(
+                        title: "Press Briefing",
+                        category: .meeting,
+                        start: today(14), end: today(15),
+                        host: "NoVA Tech Council",
+                        attendeeCount: 30
+                    )
+                ]
+            ),
+            Space(
+                name: "Cabinet Boardroom",
+                kind: .boardroom,
+                rect: CGRect(x: 0.77, y: 0.55, width: 0.18, height: 0.25),
+                capacity: 16,
+                events: [
+                    Event(
+                        title: "Executive Board Meeting",
+                        category: .meeting,
+                        start: today(9), end: today(11),
+                        host: "Comstock Holdings",
+                        attendeeCount: 12
+                    )
+                ]
             )
         ]
     )
 
-    // MARK: - Conference floor
+    // MARK: - Lobby Level
 
-    private static let conferenceFloor = Floor(
-        level: 2,
-        name: "Conference Level",
+    private static let lobbyLevel = Floor(
+        level: 1,
+        name: "Lobby Level",
         spaces: [
+            // L-shaped lobby wrapping the entrance and elevator core.
             Space(
-                name: "Summit Hall A",
-                kind: .ballroom,
-                rect: CGRect(x: 0.06, y: 0.06, width: 0.44, height: 0.40),
-                capacity: 250,
+                name: "Hotel Lobby",
+                kind: .lobby,
+                polygon: [
+                    CGPoint(x: 0.05, y: 0.05),
+                    CGPoint(x: 0.45, y: 0.05),
+                    CGPoint(x: 0.45, y: 0.22),
+                    CGPoint(x: 0.26, y: 0.22),
+                    CGPoint(x: 0.26, y: 0.42),
+                    CGPoint(x: 0.05, y: 0.42)
+                ],
+                capacity: 0
+            ),
+            Space(
+                name: "Lobby Restaurant",
+                kind: .restaurant,
+                rect: CGRect(x: 0.50, y: 0.05, width: 0.45, height: 0.34),
+                capacity: 140,
                 events: [
                     Event(
-                        title: "FinTech Forward Keynote",
-                        category: .conference,
-                        start: today(9), end: today(12),
-                        host: "FinTech Forward",
-                        attendeeCount: 210,
-                        notes: "Opening keynote and morning panels."
-                    ),
-                    Event(
-                        title: "Partner Awards Banquet",
+                        title: "Breakfast Service",
                         category: .banquet,
-                        start: today(19), end: today(22),
-                        host: "FinTech Forward",
-                        attendeeCount: 180
+                        start: today(6, 30), end: today(10, 30),
+                        host: "Culinary Team",
+                        attendeeCount: 120,
+                        notes: "À la carte and buffet breakfast."
                     )
                 ]
             ),
             Space(
-                name: "Summit Hall B",
-                kind: .ballroom,
-                rect: CGRect(x: 0.54, y: 0.06, width: 0.40, height: 0.40),
-                capacity: 200,
-                events: [
-                    Event(
-                        title: "Developer Workshop",
-                        category: .workshop,
-                        start: today(10), end: today(13),
-                        host: "API Platform Team",
-                        attendeeCount: 90,
-                        notes: "Hands-on lab — bring a laptop."
-                    )
-                ]
-            ),
-            Space(
-                name: "Cypress Boardroom",
-                kind: .boardroom,
-                rect: CGRect(x: 0.06, y: 0.52, width: 0.26, height: 0.24),
-                capacity: 16,
-                events: [
-                    Event(
-                        title: "Board of Directors",
-                        category: .meeting,
-                        start: today(11), end: today(12, 30),
-                        host: "Executive Office",
-                        attendeeCount: 12
-                    )
-                ]
-            ),
-            Space(
-                name: "Redwood Room",
-                kind: .meetingRoom,
-                rect: CGRect(x: 0.36, y: 0.52, width: 0.26, height: 0.24),
-                capacity: 40,
-                events: [
-                    Event(
-                        title: "Product Strategy Sync",
-                        category: .meeting,
-                        start: today(13), end: today(14, 30),
-                        host: "Product Org",
-                        attendeeCount: 28
-                    )
-                ]
-            ),
-            Space(
-                name: "Bayview Room",
-                kind: .meetingRoom,
-                rect: CGRect(x: 0.66, y: 0.52, width: 0.28, height: 0.24),
-                capacity: 40
-            ),
-            Space(
-                name: "Pre-Function Foyer",
+                name: "Lobby Bar & Lounge",
                 kind: .lounge,
-                rect: CGRect(x: 0.06, y: 0.80, width: 0.88, height: 0.14),
-                capacity: 150,
+                rect: CGRect(x: 0.05, y: 0.50, width: 0.40, height: 0.28),
+                capacity: 90,
                 events: [
                     Event(
-                        title: "Coffee & Networking Break",
+                        title: "Summit Welcome Reception",
                         category: .social,
-                        start: today(8), end: today(9),
-                        host: "FinTech Forward",
-                        attendeeCount: 300
+                        start: today(18), end: today(20),
+                        host: "NoVA Tech Council",
+                        attendeeCount: 130,
+                        notes: "Cocktails and passed hors d'oeuvres."
                     )
                 ]
+            ),
+            Space(
+                name: "Fitness Center",
+                kind: .fitness,
+                rect: CGRect(x: 0.50, y: 0.50, width: 0.20, height: 0.28),
+                capacity: 30,
+                events: [
+                    Event(
+                        title: "Sunrise Yoga",
+                        category: .fitness,
+                        start: today(6, 30), end: today(7, 30),
+                        host: "Wellness Studio",
+                        attendeeCount: 18
+                    )
+                ]
+            ),
+            Space(
+                name: "Spa & Wellness",
+                kind: .fitness,
+                rect: CGRect(x: 0.72, y: 0.50, width: 0.23, height: 0.28),
+                capacity: 20
             )
         ]
     )
