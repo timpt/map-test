@@ -5,12 +5,17 @@ struct Floor: Identifiable, Hashable {
     let id: UUID
     var level: Int
     var name: String
+    /// Asset-catalog image name for this floor's plan drawing. Space polygons are
+    /// expressed in this image's normalized (0...1) coordinate space. When nil,
+    /// the floor is drawn as abstract boxes instead.
+    var imageName: String?
     var spaces: [Space]
 
-    init(id: UUID = UUID(), level: Int, name: String, spaces: [Space]) {
+    init(id: UUID = UUID(), level: Int, name: String, imageName: String? = nil, spaces: [Space]) {
         self.id = id
         self.level = level
         self.name = name
+        self.imageName = imageName
         self.spaces = spaces
     }
 

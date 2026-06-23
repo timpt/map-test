@@ -1,25 +1,25 @@
 # Hotel Floor Map
 
 A SwiftUI app (iOS 26+) that displays the events happening across a venue's
-event spaces. It opens directly to an interactive floor plan where each
-room/area shows the meetings and events scheduled in it. **Display-only** — it
-visualizes the schedule, it doesn't book or edit events.
+event spaces, overlaid on the venue's **real floor-plan drawing**. It opens
+directly to the interactive plan where each room shows the meetings and events
+scheduled in it. **Display-only** — it visualizes the schedule, it doesn't book
+or edit events.
 
-The sample data is modeled on the **JW Marriott Reston Station** (Reston, VA),
-using its publicly listed event spaces (Luminary Ballroom salons, Jewel Box,
-Blank Canvas, ~40,000 sq ft on a single event level). Exact geometry and the
-breakout "Studio" rooms are approximate.
+The floor plan is the **JW Marriott Reston Station** (Reston, VA) Third Level
+event space — the actual venue drawing (`floorplan` in the asset catalog,
+rendered from the hotel's published SVG). Room hotspots are traced onto that
+drawing; the events are illustrative sample data.
 
 ## Flow
 
-1. **Floor plan** (`VenueFloorPlanView`) — the app's root. An interactive,
-   to-scale plan of the venue. Switch floors from the toolbar (Event Level /
-   Lobby Level). **Pinch to zoom and drag to pan** (a reset control appears when
-   zoomed). A summary strip shows how many events are scheduled and how many are
-   live right now. Spaces are color-coded:
+1. **Floor plan** (`VenueFloorPlanView`) — the app's root. The real plan drawing
+   with a tappable hotspot over each room. **Pinch to zoom and drag to pan**
+   (a reset control appears when zoomed). A summary strip shows how many events
+   are scheduled and how many are live right now. Rooms are tinted by status:
    - 🔴 **Red** — an event is happening now
    - 🔵 **Blue** — events scheduled today
-   - ⚪️ **Gray** — available / not an event space
+   - ⚪️ **None** — available (the drawing shows through; still tappable)
 2. **Space detail** (`SpaceDetailView`) — tap any room to open a sheet listing
    that space's events, grouped into *Happening Now*, *Later Today*, and
    *Earlier Today*.
@@ -34,13 +34,15 @@ reflects the actual time of day you run the app (it refreshes every 30s).
 HotelFloorMap/
 ├── HotelFloorMapApp.swift     App entry point (opens the floor plan)
 ├── Models/                    Venue, Floor, Space, Event, EventCategory
-├── Data/SampleData.swift      The venue: two floors of spaces & their events
+├── Data/SampleData.swift      The venue, its floor, rooms & their events
+├── Assets.xcassets/
+│   └── floorplan.imageset/    The real venue floor-plan drawing (SVG)
 └── Views/
-    ├── VenueFloorPlanView.swift  Root: floor selector, summary, plan, legend
+    ├── VenueFloorPlanView.swift  Root: summary bar, plan, legend
     ├── ZoomPanView.swift         Reusable pinch-zoom + drag-pan container
-    ├── FloorPlanView.swift       Renders tappable spaces from normalized polygons
+    ├── FloorPlanView.swift       Renders the plan image + tappable room hotspots
     ├── SpacePolygon.swift        Shape used to draw & hit-test a room footprint
-    ├── SpaceDetailView.swift     Events in a tapped space (sheet)
+    ├── SpaceDetailView.swift     Events in a tapped room (sheet)
     └── EventRow.swift / EventDetailView.swift
 ```
 
@@ -52,14 +54,22 @@ to the `HotelFloorMap/` folder are picked up automatically.
 
 ## Design notes
 
-- A `Venue` has one or more `Floor`s, each containing `Space`s (rooms/areas).
-  Each `Space` holds the `Event`s scheduled in it.
-- Each `Space` stores its footprint as a **normalized polygon** (`[CGPoint]`,
-  0–1 on both axes), so rooms can be non-rectangular (the Hotel Lobby is an
-  L-shape). A `rect:` convenience initializer covers the common rectangular
-  case. `FloorPlanView` scales each polygon to the available area and uses it
-  for both drawing and hit-testing, so corridors/gaps between rooms aren't
-  tappable.
+- A `Floor` references a plan drawing via `imageName` (an asset-catalog image).
+  `FloorPlanView` renders that image aspect-fit, then overlays each room as a
+  hotspot positioned in the drawing's normalized (0...1) coordinate space.
+- Each `Space` stores its footprint as a **normalized polygon** (`[CGPoint]`)
+  traced onto the drawing. The same polygon is used to tint the room by status
+  and to hit-test taps, so only the room area is tappable. (A `rect:`
+  convenience initializer exists for venues drawn as abstract boxes — when a
+  floor has no `imageName`.)
+- The room *names* come from the drawing itself, so the overlay stays light
+  (translucent tints only) and doesn't duplicate labels.
 - All data is in-memory sample data — there is no backend. To show a different
-  venue (or pull from a real scheduling system), replace `SampleData` with your
-  own `Venue`/`Floor`/`Space`/`Event` values.
+  floor/venue, swap the asset image and replace `SampleData` with your own
+  `Venue`/`Floor`/`Space`/`Event` values (polygons traced onto the new image).
+
+## Reproducing the room tracing
+
+The room hotspots were traced by rendering the floor-plan SVG to PNG and
+compositing candidate polygons back over it to check alignment. That tooling
+isn't part of the app; it lived in a scratch workspace during development.

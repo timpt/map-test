@@ -35,15 +35,17 @@ struct VenueFloorPlanView: View {
                     )
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color(.systemGroupedBackground))
+                .background(Color.white)
 
                 LegendBar()
             }
             .navigationTitle(venue.name)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    FloorPicker(floors: venue.floors, selection: $selectedFloorID, now: now)
+                if venue.floors.count > 1 {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        FloorPicker(floors: venue.floors, selection: $selectedFloorID, now: now)
+                    }
                 }
             }
             .sheet(item: $selectedSpace) { space in
