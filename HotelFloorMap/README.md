@@ -36,7 +36,7 @@ HotelFloorMap/
 ├── Models/                    Venue, Floor, Space, Event, EventCategory
 ├── Data/SampleData.swift      The venue, its floor, rooms & their events
 ├── Assets.xcassets/
-│   └── floorplan.imageset/    The real venue floor-plan drawing (SVG)
+│   └── floorplan.imageset/    The real venue floor-plan drawing (PNG, from the venue SVG)
 └── Views/
     ├── VenueFloorPlanView.swift  Root: summary bar, plan, legend
     ├── ZoomPanView.swift         Reusable pinch-zoom + drag-pan container

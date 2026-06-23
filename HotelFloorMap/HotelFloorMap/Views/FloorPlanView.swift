@@ -8,8 +8,9 @@ struct FloorPlanView: View {
     let now: Date
     let onSelect: (Space) -> Void
 
-    /// Aspect ratio of the source floor-plan drawing (width / height).
-    private let planAspect: CGFloat = 922.0 / 614.667
+    /// Pixel size of the bundled floor-plan image; hotspot polygons are
+    /// normalized against this exact frame, so the overlay stays aligned.
+    private let planAspect: CGFloat = 2766.0 / 1844.0
 
     var body: some View {
         GeometryReader { proxy in
@@ -20,7 +21,6 @@ struct FloorPlanView: View {
                     Image(imageName)
                         .resizable()
                         .interpolation(.high)
-                        .scaledToFit()
                         .frame(width: rect.width, height: rect.height)
                         .position(x: rect.midX, y: rect.midY)
                 }
