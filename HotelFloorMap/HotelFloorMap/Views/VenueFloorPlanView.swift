@@ -1,10 +1,10 @@
 import SwiftUI
 
 /// The app's root screen: an interactive floor plan for a single venue. Pick a
-/// floor from the toolbar; tap any room/area to see the events assigned to it.
+/// floor from the toolbar; pinch to zoom and drag to pan; tap any room/area to
+/// see (and book) the events assigned to it.
 struct VenueFloorPlanView: View {
-    let venue: Venue
-
+    @State private var store: VenueStore
     @State private var selectedFloorID: Floor.ID
     @State private var selectedSpace: Space?
     /// Drives a periodic refresh so "live" highlighting stays current.
@@ -13,9 +13,11 @@ struct VenueFloorPlanView: View {
     private let ticker = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
 
     init(venue: Venue) {
-        self.venue = venue
+        _store = State(initialValue: VenueStore(venue: venue))
         _selectedFloorID = State(initialValue: venue.floors.first?.id ?? UUID())
     }
+
+    private var venue: Venue { store.venue }
 
     private var selectedFloor: Floor {
         venue.floors.first { $0.id == selectedFloorID } ?? venue.floors[0]
@@ -26,11 +28,13 @@ struct VenueFloorPlanView: View {
             VStack(spacing: 0) {
                 FloorSummaryBar(floor: selectedFloor, now: now)
 
-                FloorPlanView(
-                    floor: selectedFloor,
-                    now: now,
-                    onSelect: { selectedSpace = $0 }
-                )
+                ZoomPanView {
+                    FloorPlanView(
+                        floor: selectedFloor,
+                        now: now,
+                        onSelect: { selectedSpace = $0 }
+                    )
+                }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color(.systemGroupedBackground))
 
@@ -44,7 +48,7 @@ struct VenueFloorPlanView: View {
                 }
             }
             .sheet(item: $selectedSpace) { space in
-                SpaceDetailView(space: space, now: now)
+                SpaceDetailView(store: store, spaceID: space.id, now: now)
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
             }

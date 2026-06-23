@@ -1,60 +1,92 @@
 import SwiftUI
 
 /// Presented when a space on the floor plan is tapped. Lists the events assigned
-/// to that space, grouped into "Happening now" and "Later today".
+/// to that space (read live from the store) and lets you book a new one.
 struct SpaceDetailView: View {
-    let space: Space
+    let store: VenueStore
+    let spaceID: Space.ID
     let now: Date
 
     @Environment(\.dismiss) private var dismiss
+    @State private var showingAddEvent = false
 
-    private var live: [Event] { space.liveEvents(at: now) }
-    private var upcoming: [Event] { space.upcomingEvents(at: now) }
-    private var past: [Event] {
-        space.events.filter { $0.end < now }
-    }
+    private var space: Space? { store.space(id: spaceID) }
 
     var body: some View {
         NavigationStack {
-            List {
-                Section {
-                    SpaceHeader(space: space)
-                        .listRowInsets(EdgeInsets())
-                        .listRowBackground(Color.clear)
-                }
-
-                if !space.kind.isBookable {
-                    ContentUnavailableView(
-                        "Not a Bookable Space",
-                        systemImage: space.kind.symbolName,
-                        description: Text("\(space.name) isn't used for scheduled events.")
-                    )
-                    .listRowBackground(Color.clear)
-                } else if space.events.isEmpty {
-                    ContentUnavailableView(
-                        "No Events Scheduled",
-                        systemImage: "calendar.badge.plus",
-                        description: Text("This space is available all day.")
-                    )
-                    .listRowBackground(Color.clear)
-                } else {
-                    eventSection("Happening Now", events: live, accent: .red)
-                    eventSection("Later Today", events: upcoming, accent: .blue)
-                    eventSection("Earlier Today", events: past, accent: .secondary)
-                }
-            }
-            .listStyle(.insetGrouped)
-            .navigationTitle(space.name)
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationDestination(for: Event.self) { event in
-                EventDetailView(event: event, spaceName: space.name, now: now)
-            }
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
-                }
+            if let space {
+                content(for: space)
+                    .navigationTitle(space.name)
+                    .navigationBarTitleDisplayMode(.inline)
+                    .navigationDestination(for: Event.self) { event in
+                        EventDetailView(event: event, spaceName: space.name, now: now)
+                    }
+                    .toolbar {
+                        ToolbarItem(placement: .topBarLeading) {
+                            Button("Done") { dismiss() }
+                        }
+                        if space.kind.isBookable {
+                            ToolbarItem(placement: .topBarTrailing) {
+                                Button {
+                                    showingAddEvent = true
+                                } label: {
+                                    Label("Book", systemImage: "plus")
+                                }
+                            }
+                        }
+                    }
+                    .sheet(isPresented: $showingAddEvent) {
+                        AddEventView(store: store, space: space)
+                    }
+            } else {
+                Color.clear.onAppear { dismiss() }
             }
         }
+    }
+
+    @ViewBuilder
+    private func content(for space: Space) -> some View {
+        let live = space.liveEvents(at: now)
+        let upcoming = space.upcomingEvents(at: now)
+        let past = space.events.filter { $0.end < now }
+
+        List {
+            Section {
+                SpaceHeader(space: space)
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+            }
+
+            if !space.kind.isBookable {
+                ContentUnavailableView(
+                    "Not a Bookable Space",
+                    systemImage: space.kind.symbolName,
+                    description: Text("\(space.name) isn't used for scheduled events.")
+                )
+                .listRowBackground(Color.clear)
+            } else if space.events.isEmpty {
+                Section {
+                    ContentUnavailableView {
+                        Label("No Events Scheduled", systemImage: "calendar.badge.plus")
+                    } description: {
+                        Text("This space is available all day.")
+                    } actions: {
+                        Button {
+                            showingAddEvent = true
+                        } label: {
+                            Label("Book This Space", systemImage: "plus")
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
+                    .listRowBackground(Color.clear)
+                }
+            } else {
+                eventSection("Happening Now", events: live, accent: .red)
+                eventSection("Later Today", events: upcoming, accent: .blue)
+                eventSection("Earlier Today", events: past, accent: .secondary)
+            }
+        }
+        .listStyle(.insetGrouped)
     }
 
     @ViewBuilder
@@ -101,5 +133,9 @@ private struct SpaceHeader: View {
 }
 
 #Preview {
-    SpaceDetailView(space: SampleData.venue.floors[0].spaces[1], now: .now)
+    SpaceDetailView(
+        store: VenueStore(venue: SampleData.venue),
+        spaceID: SampleData.venue.floors[0].spaces[1].id,
+        now: .now
+    )
 }

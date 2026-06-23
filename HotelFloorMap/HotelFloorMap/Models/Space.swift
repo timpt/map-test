@@ -2,16 +2,35 @@ import SwiftUI
 
 /// A physical, bookable space on a hotel floor (ballroom, meeting room, lobby, …).
 ///
-/// `rect` describes the room's footprint in the floor's *normalized* coordinate
-/// space (0...1 on both axes), so the floor plan renders crisply at any size.
+/// `polygon` describes the room's footprint as vertices in the floor's
+/// *normalized* coordinate space (0...1 on both axes), so the floor plan renders
+/// crisply at any size and supports non-rectangular (e.g. L-shaped) rooms.
 struct Space: Identifiable, Hashable {
     let id: UUID
     var name: String
     var kind: Kind
-    var rect: CGRect
+    var polygon: [CGPoint]
     var capacity: Int
     var events: [Event]
 
+    /// Designated initializer taking an explicit polygon.
+    init(
+        id: UUID = UUID(),
+        name: String,
+        kind: Kind,
+        polygon: [CGPoint],
+        capacity: Int,
+        events: [Event] = []
+    ) {
+        self.id = id
+        self.name = name
+        self.kind = kind
+        self.polygon = polygon
+        self.capacity = capacity
+        self.events = events.sorted { $0.start < $1.start }
+    }
+
+    /// Convenience initializer for the common case of a rectangular room.
     init(
         id: UUID = UUID(),
         name: String,
@@ -20,12 +39,13 @@ struct Space: Identifiable, Hashable {
         capacity: Int,
         events: [Event] = []
     ) {
-        self.id = id
-        self.name = name
-        self.kind = kind
-        self.rect = rect
-        self.capacity = capacity
-        self.events = events.sorted { $0.start < $1.start }
+        let corners = [
+            CGPoint(x: rect.minX, y: rect.minY),
+            CGPoint(x: rect.maxX, y: rect.minY),
+            CGPoint(x: rect.maxX, y: rect.maxY),
+            CGPoint(x: rect.minX, y: rect.maxY)
+        ]
+        self.init(id: id, name: name, kind: kind, polygon: corners, capacity: capacity, events: events)
     }
 
     enum Kind: String, Hashable {
@@ -69,4 +89,41 @@ struct Space: Identifiable, Hashable {
     }
 
     var hasEvents: Bool { !events.isEmpty }
+
+    // MARK: - Geometry
+
+    /// The axis-aligned bounding box of the polygon, in normalized coordinates.
+    var boundingBox: CGRect {
+        guard let first = polygon.first else { return .zero }
+        var minX = first.x, minY = first.y, maxX = first.x, maxY = first.y
+        for p in polygon {
+            minX = min(minX, p.x); minY = min(minY, p.y)
+            maxX = max(maxX, p.x); maxY = max(maxY, p.y)
+        }
+        return CGRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY)
+    }
+
+    /// Area-weighted centroid, used to place the room label. Falls back to the
+    /// bounding-box center for degenerate polygons.
+    var centroid: CGPoint {
+        guard polygon.count > 2 else {
+            let box = boundingBox
+            return CGPoint(x: box.midX, y: box.midY)
+        }
+        var area: CGFloat = 0, cx: CGFloat = 0, cy: CGFloat = 0
+        for i in polygon.indices {
+            let a = polygon[i]
+            let b = polygon[(i + 1) % polygon.count]
+            let cross = a.x * b.y - b.x * a.y
+            area += cross
+            cx += (a.x + b.x) * cross
+            cy += (a.y + b.y) * cross
+        }
+        area *= 0.5
+        guard abs(area) > 1e-9 else {
+            let box = boundingBox
+            return CGPoint(x: box.midX, y: box.midY)
+        }
+        return CGPoint(x: cx / (6 * area), y: cy / (6 * area))
+    }
 }

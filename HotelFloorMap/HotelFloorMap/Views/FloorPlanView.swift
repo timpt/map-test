@@ -1,7 +1,8 @@
 import SwiftUI
 
 /// Lays out a floor's spaces inside the available area, scaling each space's
-/// normalized rect to actual points. Each space is an individually tappable cell.
+/// normalized polygon to actual points. Each space is an individually tappable
+/// cell shaped to its real footprint (so gaps/corridors aren't tappable).
 struct FloorPlanView: View {
     let floor: Floor
     let now: Date
@@ -9,11 +10,10 @@ struct FloorPlanView: View {
 
     var body: some View {
         GeometryReader { proxy in
-            // Keep a consistent aspect ratio for the plan, padded inside the view.
             let inset: CGFloat = 16
             let area = CGSize(
-                width: proxy.size.width - inset * 2,
-                height: proxy.size.height - inset * 2
+                width: max(proxy.size.width - inset * 2, 1),
+                height: max(proxy.size.height - inset * 2, 1)
             )
 
             ZStack(alignment: .topLeading) {
@@ -28,37 +28,51 @@ struct FloorPlanView: View {
                     .position(x: proxy.size.width / 2, y: proxy.size.height / 2)
 
                 ForEach(floor.spaces) { space in
-                    let frame = scaled(space.rect, in: area)
-                    SpaceCell(space: space, now: now)
-                        .frame(width: frame.width, height: frame.height)
-                        .position(
-                            x: inset + frame.midX,
-                            y: inset + frame.midY
-                        )
-                        .onTapGesture { onSelect(space) }
+                    let box = space.boundingBox
+                    let frame = CGSize(width: box.width * area.width, height: box.height * area.height)
+                    SpaceCell(
+                        space: space,
+                        localPoints: localPoints(for: space, box: box),
+                        localCentroid: localCentroid(for: space, box: box),
+                        now: now
+                    )
+                    .frame(width: frame.width, height: frame.height)
+                    .position(
+                        x: inset + (box.midX * area.width),
+                        y: inset + (box.midY * area.height)
+                    )
+                    .onTapGesture { onSelect(space) }
                 }
             }
         }
     }
 
-    /// Convert a normalized (0...1) rect into the floor area's point space.
-    private func scaled(_ rect: CGRect, in area: CGSize) -> CGRect {
-        CGRect(
-            x: rect.minX * area.width,
-            y: rect.minY * area.height,
-            width: rect.width * area.width,
-            height: rect.height * area.height
-        )
+    /// Polygon vertices re-normalized to the space's own bounding box (0...1).
+    private func localPoints(for space: Space, box: CGRect) -> [CGPoint] {
+        guard box.width > 0, box.height > 0 else { return space.polygon }
+        return space.polygon.map {
+            CGPoint(x: ($0.x - box.minX) / box.width, y: ($0.y - box.minY) / box.height)
+        }
+    }
+
+    private func localCentroid(for space: Space, box: CGRect) -> CGPoint {
+        guard box.width > 0, box.height > 0 else { return CGPoint(x: 0.5, y: 0.5) }
+        let c = space.centroid
+        return CGPoint(x: (c.x - box.minX) / box.width, y: (c.y - box.minY) / box.height)
     }
 }
 
 /// A single room drawn on the floor plan, tinted by its current event status.
 private struct SpaceCell: View {
     let space: Space
+    let localPoints: [CGPoint]
+    let localCentroid: CGPoint
     let now: Date
 
     private var liveEvents: [Event] { space.liveEvents(at: now) }
     private var isLive: Bool { !liveEvents.isEmpty }
+
+    private var shape: SpacePolygon { SpacePolygon(points: localPoints) }
 
     private var tint: Color {
         if isLive { return .red }
@@ -79,26 +93,32 @@ private struct SpaceCell: View {
     }
 
     var body: some View {
-        RoundedRectangle(cornerRadius: 10)
+        shape
             .fill(fillStyle)
             .overlay(
-                RoundedRectangle(cornerRadius: 10)
-                    .stroke(tint.opacity(isLive ? 0.9 : 0.5), lineWidth: isLive ? 2 : 1)
+                shape.stroke(
+                    tint.opacity(isLive ? 0.9 : 0.5),
+                    style: StrokeStyle(lineWidth: isLive ? 2 : 1, lineJoin: .round)
+                )
             )
-            .overlay(alignment: .topLeading) {
-                if isLive {
-                    LiveBadge(count: liveEvents.count)
-                        .padding(6)
-                } else if space.hasEvents {
-                    CountBadge(count: space.events.count, tint: tint)
-                        .padding(6)
+            .overlay {
+                GeometryReader { geo in
+                    SpaceLabel(space: space)
+                        .frame(maxWidth: geo.size.width - 6)
+                        .position(
+                            x: localCentroid.x * geo.size.width,
+                            y: localCentroid.y * geo.size.height
+                        )
                 }
             }
-            .overlay {
-                SpaceLabel(space: space)
-                    .padding(4)
+            .overlay(alignment: .topLeading) {
+                if isLive {
+                    LiveBadge(count: liveEvents.count).padding(6)
+                } else if space.hasEvents {
+                    CountBadge(count: space.events.count, tint: tint).padding(6)
+                }
             }
-            .contentShape(RoundedRectangle(cornerRadius: 10))
+            .contentShape(shape)
     }
 }
 
@@ -116,7 +136,6 @@ private struct SpaceLabel: View {
                 .minimumScaleFactor(0.7)
         }
         .foregroundStyle(space.kind.isBookable ? .primary : .secondary)
-        .padding(.horizontal, 2)
     }
 }
 

@@ -1,4 +1,4 @@
-import Foundation
+import SwiftUI
 
 /// Hard-coded demo content for a single event venue. Events are anchored to
 /// *today* so that, depending on the time of day the app is run, some spaces
@@ -29,10 +29,19 @@ enum SampleData {
         level: 0,
         name: "Ground Floor",
         spaces: [
+            // An L-shaped lobby wrapping around the elevator core — shows that
+            // spaces aren't limited to rectangles.
             Space(
                 name: "Main Lobby",
                 kind: .lobby,
-                rect: CGRect(x: 0.06, y: 0.06, width: 0.40, height: 0.30),
+                polygon: [
+                    CGPoint(x: 0.06, y: 0.06),
+                    CGPoint(x: 0.46, y: 0.06),
+                    CGPoint(x: 0.46, y: 0.20),
+                    CGPoint(x: 0.24, y: 0.20),
+                    CGPoint(x: 0.24, y: 0.36),
+                    CGPoint(x: 0.06, y: 0.36)
+                ],
                 capacity: 0
             ),
             Space(
