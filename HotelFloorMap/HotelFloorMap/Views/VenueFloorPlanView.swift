@@ -2,9 +2,10 @@ import SwiftUI
 
 /// The app's root screen: an interactive floor plan for a single venue. Pick a
 /// floor from the toolbar; pinch to zoom and drag to pan; tap any room/area to
-/// see (and book) the events assigned to it.
+/// see the events scheduled in it.
 struct VenueFloorPlanView: View {
-    @State private var store: VenueStore
+    let venue: Venue
+
     @State private var selectedFloorID: Floor.ID
     @State private var selectedSpace: Space?
     /// Drives a periodic refresh so "live" highlighting stays current.
@@ -13,11 +14,9 @@ struct VenueFloorPlanView: View {
     private let ticker = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
 
     init(venue: Venue) {
-        _store = State(initialValue: VenueStore(venue: venue))
+        self.venue = venue
         _selectedFloorID = State(initialValue: venue.floors.first?.id ?? UUID())
     }
-
-    private var venue: Venue { store.venue }
 
     private var selectedFloor: Floor {
         venue.floors.first { $0.id == selectedFloorID } ?? venue.floors[0]
@@ -48,7 +47,7 @@ struct VenueFloorPlanView: View {
                 }
             }
             .sheet(item: $selectedSpace) { space in
-                SpaceDetailView(store: store, spaceID: space.id, now: now)
+                SpaceDetailView(space: space, now: now)
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
             }

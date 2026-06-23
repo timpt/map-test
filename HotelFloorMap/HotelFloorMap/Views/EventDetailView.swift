@@ -65,8 +65,8 @@ struct EventDetailView: View {
 #Preview {
     NavigationStack {
         EventDetailView(
-            event: SampleData.venue.floors[0].spaces[3].events[0],
-            spaceName: "Pacific Ballroom",
+            event: SampleData.venue.floors[0].spaces[4].events[0],
+            spaceName: "Jewel Box",
             now: .now
         )
     }
