@@ -5,9 +5,10 @@ struct Floor: Identifiable, Hashable {
     let id: UUID
     var level: Int
     var name: String
-    /// Asset-catalog image name for this floor's plan drawing. Space polygons are
+    /// Asset-catalog image of this floor's walls + labels (a lightened version of
+    /// the real plan drawing), laid over the room fills. Space polygons are
     /// expressed in this image's normalized (0...1) coordinate space. When nil,
-    /// the floor is drawn as abstract boxes instead.
+    /// only the room fills are drawn.
     var imageName: String?
     var spaces: [Space]
 

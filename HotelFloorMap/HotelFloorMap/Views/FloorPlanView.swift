@@ -1,15 +1,16 @@
 import SwiftUI
 
-/// Renders a floor's real plan drawing (`floor.imageName`) and overlays a
-/// tappable hotspot on each space, aligned to the drawing. Spaces with live or
-/// scheduled events are tinted; the room names come from the drawing itself.
+/// Renders the floor as a familiar indoor-map: each room is filled by event
+/// status, and the venue's real walls + labels (a lightened drawing in
+/// `floor.imageName`) are laid over the top, so the map stays geometrically
+/// accurate while reading like a styled indoor map.
 struct FloorPlanView: View {
     let floor: Floor
     let now: Date
     let onSelect: (Space) -> Void
 
-    /// Pixel size of the bundled floor-plan image; hotspot polygons are
-    /// normalized against this exact frame, so the overlay stays aligned.
+    /// Pixel aspect of the bundled walls image; room polygons are normalized
+    /// against this exact frame so fills line up under the walls.
     private let planAspect: CGFloat = 2766.0 / 1844.0
 
     var body: some View {
@@ -17,17 +18,10 @@ struct FloorPlanView: View {
             let rect = fittedPlanRect(in: proxy.size)
 
             ZStack(alignment: .topLeading) {
-                if let imageName = floor.imageName {
-                    Image(imageName)
-                        .resizable()
-                        .interpolation(.high)
-                        .frame(width: rect.width, height: rect.height)
-                        .position(x: rect.midX, y: rect.midY)
-                }
-
+                // Room fills (tappable), beneath the walls.
                 ForEach(floor.spaces) { space in
                     let box = space.boundingBox
-                    RoomHotspot(
+                    RoomFill(
                         space: space,
                         localPoints: localPoints(for: space, box: box),
                         now: now
@@ -39,11 +33,21 @@ struct FloorPlanView: View {
                     )
                     .onTapGesture { onSelect(space) }
                 }
+
+                // Real walls + labels on top; never intercepts taps.
+                if let imageName = floor.imageName {
+                    Image(imageName)
+                        .resizable()
+                        .interpolation(.high)
+                        .frame(width: rect.width, height: rect.height)
+                        .position(x: rect.midX, y: rect.midY)
+                        .allowsHitTesting(false)
+                }
             }
         }
     }
 
-    /// The aspect-fit rectangle the plan image occupies within `size`.
+    /// The aspect-fit rectangle the plan occupies within `size`.
     private func fittedPlanRect(in size: CGSize) -> CGRect {
         var width = size.width
         var height = size.width / planAspect
@@ -68,64 +72,29 @@ struct FloorPlanView: View {
     }
 }
 
-/// A single tappable room overlay, tinted by its current event status. Drawn
-/// translucent so the underlying floor-plan drawing (and room name) shows.
-private struct RoomHotspot: View {
+/// A room filled by its event status, sitting under the walls layer.
+private struct RoomFill: View {
     let space: Space
     let localPoints: [CGPoint]
     let now: Date
 
-    private var liveEvents: [Event] { space.liveEvents(at: now) }
-    private var isLive: Bool { !liveEvents.isEmpty }
+    private var isLive: Bool { !space.liveEvents(at: now).isEmpty }
     private var shape: SpacePolygon { SpacePolygon(points: localPoints) }
 
-    private var tint: Color {
-        if isLive { return .red }
-        if space.hasEvents { return .blue }
-        return .clear
-    }
-
-    private var fillOpacity: Double {
-        if isLive { return 0.30 }
-        if space.hasEvents { return 0.16 }
-        return 0.001 // effectively invisible, but keeps the area tappable
+    private var fill: Color {
+        if isLive { return Color(red: 0.97, green: 0.84, blue: 0.82) }   // soft red
+        if space.hasEvents { return Color(red: 0.83, green: 0.89, blue: 0.98) } // soft blue
+        return .white                                                     // available
     }
 
     var body: some View {
         shape
-            .fill(tint.opacity(fillOpacity))
-            .overlay {
-                if tint != .clear {
-                    shape.stroke(tint.opacity(0.9), style: StrokeStyle(lineWidth: isLive ? 2.5 : 1.5, lineJoin: .round))
-                }
-            }
-            .overlay(alignment: .topLeading) {
-                if isLive {
-                    LiveBadge(count: liveEvents.count).padding(3)
-                }
-            }
+            .fill(fill)
             .contentShape(shape)
-    }
-}
-
-private struct LiveBadge: View {
-    let count: Int
-
-    var body: some View {
-        HStack(spacing: 3) {
-            Image(systemName: "dot.radiowaves.left.and.right")
-            if count > 1 { Text("\(count)") }
-        }
-        .font(.system(size: 10, weight: .bold))
-        .foregroundStyle(.white)
-        .padding(.horizontal, 5)
-        .padding(.vertical, 2)
-        .background(Capsule().fill(.red))
-        .shadow(radius: 1)
     }
 }
 
 #Preview {
     FloorPlanView(floor: SampleData.venue.floors[0], now: .now) { _ in }
-        .background(Color(.systemBackground))
+        .background(Color(red: 0.949, green: 0.941, blue: 0.918))
 }

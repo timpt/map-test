@@ -16,10 +16,12 @@ drawing; the events are illustrative sample data.
 1. **Floor plan** (`VenueFloorPlanView`) — the app's root. The real plan drawing
    with a tappable hotspot over each room. **Pinch to zoom and drag to pan**
    (a reset control appears when zoomed). A summary strip shows how many events
-   are scheduled and how many are live right now. Rooms are tinted by status:
-   - 🔴 **Red** — an event is happening now
-   - 🔵 **Blue** — events scheduled today
-   - ⚪️ **None** — available (the drawing shows through; still tappable)
+   are scheduled and how many are live right now. Each room is **filled** by
+   status, under the venue's real (lightened) walls + labels — a familiar
+   indoor-map look that stays geometrically accurate:
+   - 🔴 **Red fill** — an event is happening now
+   - 🔵 **Blue fill** — events scheduled today
+   - ⚪️ **White fill** — available
 2. **Space detail** (`SpaceDetailView`) — tap any room to open a sheet listing
    that space's events, grouped into *Happening Now*, *Later Today*, and
    *Earlier Today*.
@@ -36,7 +38,7 @@ HotelFloorMap/
 ├── Models/                    Venue, Floor, Space, Event, EventCategory
 ├── Data/SampleData.swift      The venue, its floor, rooms & their events
 ├── Assets.xcassets/
-│   └── floorplan.imageset/    The real venue floor-plan drawing (PNG, from the venue SVG)
+│   └── floorplanWalls.imageset/  Venue walls + labels, lightened to gray (PNG, from the venue SVG)
 └── Views/
     ├── VenueFloorPlanView.swift  Root: summary bar, plan, legend
     ├── ZoomPanView.swift         Reusable pinch-zoom + drag-pan container
@@ -54,16 +56,15 @@ to the `HotelFloorMap/` folder are picked up automatically.
 
 ## Design notes
 
-- A `Floor` references a plan drawing via `imageName` (an asset-catalog image).
-  `FloorPlanView` renders that image aspect-fit, then overlays each room as a
-  hotspot positioned in the drawing's normalized (0...1) coordinate space.
+- `FloorPlanView` draws three layers in a fitted rect: a warm background, the
+  per-room **fills** (colored by event status, also the tap targets), and on top
+  the `floor.imageName` image of the real **walls + labels** (lightened to gray,
+  `.allowsHitTesting(false)`). Walls drawn over the fills give crisp, accurate
+  room edges and free, correctly-placed labels.
 - Each `Space` stores its footprint as a **normalized polygon** (`[CGPoint]`)
-  traced onto the drawing. The same polygon is used to tint the room by status
-  and to hit-test taps, so only the room area is tappable. (A `rect:`
-  convenience initializer exists for venues drawn as abstract boxes — when a
-  floor has no `imageName`.)
-- The room *names* come from the drawing itself, so the overlay stays light
-  (translucent tints only) and doesn't duplicate labels.
+  traced onto that image's (0...1) coordinate space; the same polygon is the
+  fill shape and the hit-test area. (A `rect:` convenience initializer exists for
+  abstract-box venues with no `imageName`.)
 - All data is in-memory sample data — there is no backend. To show a different
   floor/venue, swap the asset image and replace `SampleData` with your own
   `Venue`/`Floor`/`Space`/`Event` values (polygons traced onto the new image).

@@ -1,10 +1,10 @@
 import SwiftUI
 
 /// Demo content for the **JW Marriott Reston Station** (Reston, VA), Third Level
-/// event space. The floor plan is the venue's real drawing (rendered from
-/// `floorplan` in the asset catalog); each `Space.polygon` is traced onto that
-/// drawing in its normalized (0...1) coordinate space. Events are illustrative
-/// and anchored to *today* so "live" highlighting reflects the current time.
+/// event space. The room fills are drawn under the venue's real walls + labels
+/// (`floorplanWalls` in the asset catalog); each `Space.polygon` is traced onto
+/// that drawing in its normalized (0...1) coordinate space. Events are
+/// illustrative and anchored to *today* so "live" highlighting reflects the time.
 enum SampleData {
 
     static let venue = Venue(
@@ -21,7 +21,7 @@ enum SampleData {
     private static let thirdLevel = Floor(
         level: 3,
         name: "Third Level",
-        imageName: "floorplan",
+        imageName: "floorplanWalls",
         spaces: [
             Space(
                 name: "Jewel Box",
