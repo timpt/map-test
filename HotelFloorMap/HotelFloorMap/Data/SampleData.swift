@@ -26,7 +26,7 @@ enum SampleData {
             Space(
                 name: "Jewel Box",
                 kind: .ballroom,
-                polygon: [CGPoint(x: 0.2332, y: 0.1668), CGPoint(x: 0.4056, y: 0.1855), CGPoint(x: 0.4187, y: 0.3214), CGPoint(x: 0.2451, y: 0.3255)],
+                polygon: [CGPoint(x: 0.2415, y: 0.3246), CGPoint(x: 0.2915, y: 0.3178), CGPoint(x: 0.2879, y: 0.2783), CGPoint(x: 0.3224, y: 0.2742), CGPoint(x: 0.3197, y: 0.2442), CGPoint(x: 0.3879, y: 0.2332), CGPoint(x: 0.3906, y: 0.2633), CGPoint(x: 0.3752, y: 0.2673), CGPoint(x: 0.377, y: 0.2905), CGPoint(x: 0.4124, y: 0.2824), CGPoint(x: 0.4052, y: 0.1582), CGPoint(x: 0.2333, y: 0.1814)],
                 capacity: 250,
                 events: [
                     Event(
@@ -42,7 +42,7 @@ enum SampleData {
             Space(
                 name: "Luminary Ballroom",
                 kind: .ballroom,
-                polygon: [CGPoint(x: 0.2809, y: 0.3417), CGPoint(x: 0.4241, y: 0.332), CGPoint(x: 0.4295, y: 0.4679), CGPoint(x: 0.2907, y: 0.4866)],
+                polygon: [CGPoint(x: 0.2806, y: 0.3355), CGPoint(x: 0.4179, y: 0.3124), CGPoint(x: 0.4288, y: 0.461), CGPoint(x: 0.2915, y: 0.4842)],
                 capacity: 600,
                 events: [
                     Event(
@@ -65,7 +65,7 @@ enum SampleData {
             Space(
                 name: "JW Ballroom Salon 1",
                 kind: .ballroom,
-                polygon: [CGPoint(x: 0.2793, y: 0.4898), CGPoint(x: 0.4056, y: 0.4947), CGPoint(x: 0.4067, y: 0.5842), CGPoint(x: 0.2809, y: 0.5793)],
+                polygon: [CGPoint(x: 0.2815, y: 0.4842), CGPoint(x: 0.2897, y: 0.5852), CGPoint(x: 0.3933, y: 0.5674), CGPoint(x: 0.3852, y: 0.4679)],
                 capacity: 200,
                 events: [
                     Event(
@@ -80,7 +80,7 @@ enum SampleData {
             Space(
                 name: "JW Ballroom Salon 2",
                 kind: .ballroom,
-                polygon: [CGPoint(x: 0.3449, y: 0.5826), CGPoint(x: 0.4067, y: 0.5842), CGPoint(x: 0.4089, y: 0.6819), CGPoint(x: 0.3471, y: 0.6794)],
+                polygon: [CGPoint(x: 0.29, y: 0.5863), CGPoint(x: 0.3927, y: 0.5685), CGPoint(x: 0.4009, y: 0.6545), CGPoint(x: 0.2955, y: 0.6722)],
                 capacity: 150,
                 events: [
                     Event(
@@ -96,7 +96,7 @@ enum SampleData {
             Space(
                 name: "JW Ballroom Salon 3",
                 kind: .ballroom,
-                polygon: [CGPoint(x: 0.2809, y: 0.5793), CGPoint(x: 0.3449, y: 0.5826), CGPoint(x: 0.3482, y: 0.7771), CGPoint(x: 0.2847, y: 0.7746)],
+                polygon: [CGPoint(x: 0.3036, y: 0.7704), CGPoint(x: 0.2955, y: 0.6735), CGPoint(x: 0.3509, y: 0.664), CGPoint(x: 0.3591, y: 0.7622)],
                 capacity: 150,
                 events: [
                     Event(
@@ -111,13 +111,13 @@ enum SampleData {
             Space(
                 name: "JW Ballroom Salon 4",
                 kind: .ballroom,
-                polygon: [CGPoint(x: 0.3471, y: 0.6794), CGPoint(x: 0.4089, y: 0.6819), CGPoint(x: 0.4111, y: 0.7795), CGPoint(x: 0.3482, y: 0.7771)],
+                polygon: [CGPoint(x: 0.36, y: 0.7622), CGPoint(x: 0.4091, y: 0.7513), CGPoint(x: 0.4009, y: 0.6572), CGPoint(x: 0.3518, y: 0.664)],
                 capacity: 150
             ),
             Space(
                 name: "Black Canvas",
                 kind: .meetingRoom,
-                polygon: [CGPoint(x: 0.5477, y: 0.7583), CGPoint(x: 0.6063, y: 0.7616), CGPoint(x: 0.6052, y: 0.8771), CGPoint(x: 0.5466, y: 0.8747)],
+                polygon: [CGPoint(x: 0.5445, y: 0.8386), CGPoint(x: 0.5436, y: 0.7308), CGPoint(x: 0.5982, y: 0.7445), CGPoint(x: 0.5982, y: 0.8386)],
                 capacity: 80,
                 events: [
                     Event(
@@ -132,7 +132,7 @@ enum SampleData {
             Space(
                 name: "Meeting Room 1",
                 kind: .meetingRoom,
-                polygon: [CGPoint(x: 0.6063, y: 0.7616), CGPoint(x: 0.6464, y: 0.764), CGPoint(x: 0.6453, y: 0.8788), CGPoint(x: 0.6052, y: 0.8771)],
+                polygon: [CGPoint(x: 0.5982, y: 0.7445), CGPoint(x: 0.6427, y: 0.7581), CGPoint(x: 0.6436, y: 0.84), CGPoint(x: 0.5982, y: 0.84)],
                 capacity: 40,
                 events: [
                     Event(
@@ -147,7 +147,7 @@ enum SampleData {
             Space(
                 name: "Meeting Room 2",
                 kind: .meetingRoom,
-                polygon: [CGPoint(x: 0.6464, y: 0.764), CGPoint(x: 0.6887, y: 0.7673), CGPoint(x: 0.6876, y: 0.8804), CGPoint(x: 0.6453, y: 0.8788)],
+                polygon: [CGPoint(x: 0.6436, y: 0.8386), CGPoint(x: 0.6927, y: 0.84), CGPoint(x: 0.6927, y: 0.7704), CGPoint(x: 0.6436, y: 0.7568)],
                 capacity: 40,
                 events: [
                     Event(
@@ -162,13 +162,13 @@ enum SampleData {
             Space(
                 name: "Meeting Room 3",
                 kind: .meetingRoom,
-                polygon: [CGPoint(x: 0.6887, y: 0.7673), CGPoint(x: 0.7332, y: 0.7705), CGPoint(x: 0.7321, y: 0.8836), CGPoint(x: 0.6876, y: 0.8804)],
+                polygon: [CGPoint(x: 0.6927, y: 0.8386), CGPoint(x: 0.7418, y: 0.8386), CGPoint(x: 0.7427, y: 0.7813), CGPoint(x: 0.7045, y: 0.7813), CGPoint(x: 0.7045, y: 0.7731), CGPoint(x: 0.6936, y: 0.769)],
                 capacity: 40
             ),
             Space(
                 name: "Meeting Room 4",
                 kind: .meetingRoom,
-                polygon: [CGPoint(x: 0.7332, y: 0.7705), CGPoint(x: 0.7983, y: 0.7754), CGPoint(x: 0.7972, y: 0.8869), CGPoint(x: 0.7321, y: 0.8836)],
+                polygon: [CGPoint(x: 0.7427, y: 0.8386), CGPoint(x: 0.76, y: 0.8386), CGPoint(x: 0.76, y: 0.8522), CGPoint(x: 0.7882, y: 0.8509), CGPoint(x: 0.7873, y: 0.7909), CGPoint(x: 0.7427, y: 0.7895)],
                 capacity: 40,
                 events: [
                     Event(
@@ -184,7 +184,7 @@ enum SampleData {
             Space(
                 name: "Board Room",
                 kind: .boardroom,
-                polygon: [CGPoint(x: 0.7495, y: 0.891), CGPoint(x: 0.8091, y: 0.8942), CGPoint(x: 0.8091, y: 0.9642), CGPoint(x: 0.7495, y: 0.9626)],
+                polygon: [CGPoint(x: 0.7418, y: 0.9041), CGPoint(x: 0.7418, y: 0.9586), CGPoint(x: 0.7882, y: 0.9586), CGPoint(x: 0.7882, y: 0.9027)],
                 capacity: 16,
                 events: [
                     Event(
@@ -193,21 +193,6 @@ enum SampleData {
                         start: today(9), end: today(11),
                         host: "Comstock Holdings",
                         attendeeCount: 12
-                    )
-                ]
-            ),
-            Space(
-                name: "The Counter",
-                kind: .lounge,
-                polygon: [CGPoint(x: 0.4989, y: 0.7933), CGPoint(x: 0.5249, y: 0.795), CGPoint(x: 0.5249, y: 0.8511), CGPoint(x: 0.4989, y: 0.8495)],
-                capacity: 60,
-                events: [
-                    Event(
-                        title: "Registration & Coffee",
-                        category: .social,
-                        start: today(8), end: today(9),
-                        host: "NoVA Tech Council",
-                        attendeeCount: 300
                     )
                 ]
             )
