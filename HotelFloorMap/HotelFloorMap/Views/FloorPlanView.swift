@@ -9,6 +9,9 @@ struct FloorPlanView: View {
     let now: Date
     /// The currently selected room, highlighted above the walls layer.
     var selectedSpaceID: Space.ID?
+    /// When true (the map is pinned to the live clock), busy rooms gently pulse
+    /// to signal they're happening *right now* rather than at a scrubbed time.
+    var emphasizeLive: Bool = false
     let onSelect: (Space) -> Void
 
     /// Pixel aspect of the bundled walls image; room polygons are normalized
@@ -26,7 +29,8 @@ struct FloorPlanView: View {
                     RoomFill(
                         space: space,
                         localPoints: localPoints(for: space, box: box),
-                        now: now
+                        now: now,
+                        emphasizeLive: emphasizeLive
                     )
                     .frame(width: box.width * rect.width, height: box.height * rect.height)
                     .position(
@@ -103,14 +107,29 @@ private struct RoomFill: View {
     let localPoints: [CGPoint]
     /// The time the map is currently showing (driven by the scrubber).
     let now: Date
+    let emphasizeLive: Bool
 
+    @State private var pulsing = false
+
+    private var isBusy: Bool { space.isBusy(at: now) }
     private var shape: SpacePolygon { SpacePolygon(points: localPoints) }
-    private var fill: Color { space.isBusy(at: now) ? MapStyle.busy : MapStyle.quiet }
+    private var fill: Color { isBusy ? MapStyle.busy : MapStyle.quiet }
+
+    /// Pulse only live-right-now rooms, so a scrubbed snapshot stays static.
+    private var shouldPulse: Bool { isBusy && emphasizeLive }
 
     var body: some View {
         shape
             .fill(fill)
+            .opacity(shouldPulse && pulsing ? 0.65 : 1)
             .contentShape(shape)
+            .onChange(of: shouldPulse, initial: true) { _, active in
+                pulsing = false
+                guard active else { return }
+                withAnimation(.easeInOut(duration: 1.3).repeatForever(autoreverses: true)) {
+                    pulsing = true
+                }
+            }
     }
 }
 

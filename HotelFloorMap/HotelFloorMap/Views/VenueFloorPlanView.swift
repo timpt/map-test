@@ -48,6 +48,7 @@ struct VenueFloorPlanView: View {
                         floor: selectedFloor,
                         now: viewingDate,
                         selectedSpaceID: selectedSpace?.id,
+                        emphasizeLive: pinnedToNow,
                         onSelect: { selectedSpace = $0 }
                     )
                 }
