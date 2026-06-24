@@ -8,8 +8,12 @@ struct VenueFloorPlanView: View {
 
     @State private var selectedFloorID: Floor.ID
     @State private var selectedSpace: Space?
-    /// Drives a periodic refresh so "live" highlighting stays current.
+    /// The real current time, advanced by the ticker.
     @State private var now: Date = .now
+    /// The moment the map reflects — set by the scrubber, defaults to `now`.
+    @State private var viewingDate: Date = .now
+    /// Whether the map is following the live clock (vs a scrubbed time).
+    @State private var pinnedToNow = true
 
     private let ticker = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
 
@@ -22,21 +26,45 @@ struct VenueFloorPlanView: View {
         venue.floors.first { $0.id == selectedFloorID } ?? venue.floors[0]
     }
 
+    /// Hour-of-day bounds for the slider, derived from the day's events with a
+    /// little padding; falls back to a sensible daytime window.
+    private var hourRange: ClosedRange<Double> {
+        guard let span = selectedFloor.eventTimeSpan else { return 8...22 }
+        let cal = Calendar.current
+        let lower = max(0, Double(cal.component(.hour, from: span.lowerBound)) - 1)
+        let upperHour = Double(cal.component(.hour, from: span.upperBound))
+        let upperMin = Double(cal.component(.minute, from: span.upperBound))
+        let upper = min(24, (upperMin > 0 ? upperHour + 1 : upperHour) + 1)
+        return lower...max(lower + 1, upper)
+    }
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                FloorSummaryBar(floor: selectedFloor, now: now)
+                FloorSummaryBar(floor: selectedFloor, viewingDate: viewingDate, pinnedToNow: pinnedToNow)
 
                 ZoomPanView {
                     FloorPlanView(
                         floor: selectedFloor,
-                        now: now,
+                        now: viewingDate,
                         selectedSpaceID: selectedSpace?.id,
                         onSelect: { selectedSpace = $0 }
                     )
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color(red: 0.949, green: 0.941, blue: 0.918))
+
+                TimeScrubber(
+                    days: selectedFloor.eventDays,
+                    hourRange: hourRange,
+                    selectedDate: $viewingDate,
+                    isPinnedToNow: pinnedToNow,
+                    onScrub: { pinnedToNow = false },
+                    onJumpToNow: {
+                        pinnedToNow = true
+                        viewingDate = now
+                    }
+                )
 
                 LegendBar()
             }
@@ -45,44 +73,52 @@ struct VenueFloorPlanView: View {
             .toolbar {
                 if venue.floors.count > 1 {
                     ToolbarItem(placement: .topBarTrailing) {
-                        FloorPicker(floors: venue.floors, selection: $selectedFloorID, now: now)
+                        FloorPicker(floors: venue.floors, selection: $selectedFloorID, now: viewingDate)
                     }
                 }
             }
             .sheet(item: $selectedSpace) { space in
-                SpaceDetailView(space: space, now: now)
+                SpaceDetailView(space: space, now: viewingDate)
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
             }
-            .onReceive(ticker) { now = $0 }
+            .onReceive(ticker) { newNow in
+                now = newNow
+                if pinnedToNow { viewingDate = newNow }
+            }
         }
     }
 }
 
-/// A strip under the navigation bar describing the visible floor at a glance.
+/// A strip under the navigation bar summarizing the viewed day & moment.
 private struct FloorSummaryBar: View {
     let floor: Floor
-    let now: Date
+    let viewingDate: Date
+    let pinnedToNow: Bool
 
-    private var liveCount: Int { floor.liveEventCount(at: now) }
+    private var busyCount: Int { floor.busyCount(at: viewingDate) }
+    private var dayCount: Int { floor.eventCount(on: viewingDate) }
 
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text(floor.name)
+                Text(viewingDate.formatted(.dateTime.weekday(.wide).month().day()))
                     .font(.headline)
-                Text("\(floor.eventCount) events today")
+                Text("\(dayCount) events scheduled")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            if liveCount > 0 {
-                Label("\(liveCount) live now", systemImage: "dot.radiowaves.left.and.right")
-                    .font(.caption.bold())
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(Capsule().fill(.red))
+            if busyCount > 0 {
+                Label(
+                    pinnedToNow ? "\(busyCount) on now" : "\(busyCount) at this time",
+                    systemImage: "dot.radiowaves.left.and.right"
+                )
+                .font(.caption.bold())
+                .foregroundStyle(.white)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(Capsule().fill(Color.accentColor))
             }
         }
         .padding(.horizontal)
@@ -120,13 +156,12 @@ private struct FloorPicker: View {
     }
 }
 
-/// Color key explaining what the space tints mean.
+/// Color key explaining what the room tints mean.
 private struct LegendBar: View {
     var body: some View {
         HStack(spacing: 18) {
-            legendItem(color: Color(red: 0.97, green: 0.84, blue: 0.82), label: "Live now")
-            legendItem(color: Color(red: 0.83, green: 0.89, blue: 0.98), label: "Scheduled")
-            legendItem(color: .white, label: "Available")
+            legendItem(color: MapStyle.busy, label: "Event on")
+            legendItem(color: MapStyle.quiet, label: "Nothing on")
         }
         .font(.caption2)
         .foregroundStyle(.secondary)

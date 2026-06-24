@@ -88,6 +88,16 @@ struct Space: Identifiable, Hashable {
         events.filter { $0.isUpcoming(at: reference) }
     }
 
+    /// The event underway at `reference`, if any (rooms hold one at a time).
+    func event(at reference: Date) -> Event? {
+        events.first { $0.isLive(at: reference) }
+    }
+
+    /// Whether a session is taking place in this space at `reference`.
+    func isBusy(at reference: Date) -> Bool {
+        event(at: reference) != nil
+    }
+
     var hasEvents: Bool { !events.isEmpty }
 
     // MARK: - Geometry

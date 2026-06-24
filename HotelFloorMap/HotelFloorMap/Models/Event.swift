@@ -42,8 +42,9 @@ struct Event: Identifiable, Hashable {
     }
 
     var timeRangeText: String {
-        let formatter = Date.FormatStyle.dateTime.hour().minute()
-        return "\(start.formatted(formatter)) – \(end.formatted(formatter))"
+        let time = Date.FormatStyle.dateTime.hour().minute()
+        let weekday = start.formatted(.dateTime.weekday(.abbreviated))
+        return "\(weekday) \(start.formatted(time)) – \(end.formatted(time))"
     }
 
     var durationText: String {

@@ -1,10 +1,11 @@
 import SwiftUI
 
 /// Demo content for the **JW Marriott Reston Station** (Reston, VA), Third Level
-/// event space. The room fills are drawn under the venue's real walls + labels
-/// (`floorplanWalls` in the asset catalog); each `Space.polygon` is traced onto
-/// that drawing in its normalized (0...1) coordinate space. Events are
-/// illustrative and anchored to *today* so "live" highlighting reflects the time.
+/// event space, modeled as a **3-day conference** so the time scrubber has
+/// something to browse. The room fills are drawn under the venue's real walls +
+/// labels (`floorplanWalls`); each `Space.polygon` is traced onto that drawing
+/// in its normalized (0...1) coordinate space. Day 1 is *today*, so the map's
+/// default "now" view reflects sessions actually underway.
 enum SampleData {
 
     static let venue = Venue(
@@ -13,9 +14,12 @@ enum SampleData {
         floors: [thirdLevel]
     )
 
-    /// A `Date` today at the given hour/minute in the user's calendar.
-    private static func today(_ hour: Int, _ minute: Int = 0) -> Date {
-        Calendar.current.date(bySettingHour: hour, minute: minute, second: 0, of: .now) ?? .now
+    /// A `Date` on conference `day` (0 = today, 1 = tomorrow, …) at the given
+    /// hour/minute in the user's calendar.
+    private static func at(_ day: Int, _ hour: Int, _ minute: Int = 0) -> Date {
+        let calendar = Calendar.current
+        let base = calendar.date(byAdding: .day, value: day, to: calendar.startOfDay(for: .now)) ?? .now
+        return calendar.date(bySettingHour: hour, minute: minute, second: 0, of: base) ?? base
     }
 
     private static let thirdLevel = Floor(
@@ -30,9 +34,24 @@ enum SampleData {
                 capacity: 250,
                 events: [
                     Event(
+                        title: "Welcome Reception",
+                        category: .social,
+                        start: at(0, 17), end: at(0, 19),
+                        host: "NoVA Tech Council",
+                        attendeeCount: 220,
+                        notes: "Drinks and light bites to kick off the summit."
+                    ),
+                    Event(
+                        title: "Design Systems Summit",
+                        category: .conference,
+                        start: at(1, 10), end: at(1, 13),
+                        host: "Studio North",
+                        attendeeCount: 180
+                    ),
+                    Event(
                         title: "Ramirez–Cole Wedding",
                         category: .wedding,
-                        start: today(17), end: today(23),
+                        start: at(2, 17), end: at(2, 23),
                         host: "Events by Lumen",
                         attendeeCount: 180,
                         notes: "Ceremony at 5:00 PM, reception to follow."
@@ -46,19 +65,54 @@ enum SampleData {
                 capacity: 600,
                 events: [
                     Event(
-                        title: "Northern Virginia Tech Summit",
+                        title: "Opening Keynote",
                         category: .conference,
-                        start: today(9), end: today(12),
+                        start: at(0, 9), end: at(0, 10, 30),
                         host: "NoVA Tech Council",
-                        attendeeCount: 540,
-                        notes: "Opening keynote and morning general sessions."
+                        attendeeCount: 560,
+                        notes: "State of the platform and the year ahead."
+                    ),
+                    Event(
+                        title: "Platform Vision Session",
+                        category: .conference,
+                        start: at(0, 11), end: at(0, 12, 15),
+                        host: "NoVA Tech Council",
+                        attendeeCount: 540
                     ),
                     Event(
                         title: "Innovation Awards Gala",
                         category: .banquet,
-                        start: today(19), end: today(22, 30),
+                        start: at(0, 19), end: at(0, 22, 30),
                         host: "NoVA Tech Council",
                         attendeeCount: 480
+                    ),
+                    Event(
+                        title: "Day 2 Keynote",
+                        category: .conference,
+                        start: at(1, 9), end: at(1, 10, 15),
+                        host: "NoVA Tech Council",
+                        attendeeCount: 530
+                    ),
+                    Event(
+                        title: "Lightning Talks",
+                        category: .conference,
+                        start: at(1, 11), end: at(1, 12, 30),
+                        host: "NoVA Tech Council",
+                        attendeeCount: 410
+                    ),
+                    Event(
+                        title: "Closing Keynote",
+                        category: .conference,
+                        start: at(2, 9), end: at(2, 10, 30),
+                        host: "NoVA Tech Council",
+                        attendeeCount: 500
+                    ),
+                    Event(
+                        title: "Career & Hiring Fair",
+                        category: .social,
+                        start: at(2, 13), end: at(2, 16, 30),
+                        host: "NoVA Tech Council",
+                        attendeeCount: 300
                     )
                 ]
             ),
@@ -71,9 +125,23 @@ enum SampleData {
                     Event(
                         title: "Cloud Infrastructure Track",
                         category: .conference,
-                        start: today(13), end: today(15, 30),
+                        start: at(0, 13), end: at(0, 15, 30),
                         host: "NoVA Tech Council",
                         attendeeCount: 160
+                    ),
+                    Event(
+                        title: "AI & Machine Learning Track",
+                        category: .conference,
+                        start: at(1, 9), end: at(1, 12),
+                        host: "NoVA Tech Council",
+                        attendeeCount: 190
+                    ),
+                    Event(
+                        title: "Open Source Roundtable",
+                        category: .meeting,
+                        start: at(2, 10), end: at(2, 11, 30),
+                        host: "CNCF Reston",
+                        attendeeCount: 70
                     )
                 ]
             ),
@@ -86,10 +154,17 @@ enum SampleData {
                     Event(
                         title: "Security & Identity Workshop",
                         category: .workshop,
-                        start: today(10), end: today(13),
+                        start: at(0, 10), end: at(0, 13),
                         host: "API Platform Team",
                         attendeeCount: 90,
                         notes: "Hands-on lab — bring a laptop."
+                    ),
+                    Event(
+                        title: "Data Engineering Track",
+                        category: .conference,
+                        start: at(1, 13), end: at(1, 16),
+                        host: "NoVA Tech Council",
+                        attendeeCount: 130
                     )
                 ]
             ),
@@ -102,9 +177,30 @@ enum SampleData {
                     Event(
                         title: "Partner Networking Lunch",
                         category: .social,
-                        start: today(12), end: today(13, 30),
+                        start: at(0, 12), end: at(0, 13, 30),
                         host: "NoVA Tech Council",
                         attendeeCount: 140
+                    ),
+                    Event(
+                        title: "Women in Tech Breakfast",
+                        category: .social,
+                        start: at(1, 8), end: at(1, 9),
+                        host: "Women Who Code",
+                        attendeeCount: 95
+                    ),
+                    Event(
+                        title: "Developer Q&A",
+                        category: .meeting,
+                        start: at(1, 14), end: at(1, 15, 30),
+                        host: "Developer Relations",
+                        attendeeCount: 110
+                    ),
+                    Event(
+                        title: "Farewell Lunch",
+                        category: .social,
+                        start: at(2, 12), end: at(2, 13, 30),
+                        host: "NoVA Tech Council",
+                        attendeeCount: 150
                     )
                 ]
             ),
@@ -112,7 +208,24 @@ enum SampleData {
                 name: "JW Ballroom Salon 4",
                 kind: .ballroom,
                 polygon: [CGPoint(x: 0.36, y: 0.7622), CGPoint(x: 0.4091, y: 0.7513), CGPoint(x: 0.4009, y: 0.6572), CGPoint(x: 0.3518, y: 0.664)],
-                capacity: 150
+                capacity: 150,
+                events: [
+                    Event(
+                        title: "DevOps Hands-on Workshop",
+                        category: .workshop,
+                        start: at(1, 10), end: at(1, 13),
+                        host: "Platform Engineering",
+                        attendeeCount: 120,
+                        notes: "Bring a laptop with Docker installed."
+                    ),
+                    Event(
+                        title: "Hackathon Showcase",
+                        category: .workshop,
+                        start: at(2, 10), end: at(2, 12),
+                        host: "NoVA Tech Council",
+                        attendeeCount: 130
+                    )
+                ]
             ),
             Space(
                 name: "Black Canvas",
@@ -123,9 +236,16 @@ enum SampleData {
                     Event(
                         title: "Product Design Workshop",
                         category: .workshop,
-                        start: today(10), end: today(13),
+                        start: at(0, 10), end: at(0, 13),
                         host: "Studio North",
                         attendeeCount: 45
+                    ),
+                    Event(
+                        title: "UX Research Clinic",
+                        category: .workshop,
+                        start: at(1, 14), end: at(1, 16),
+                        host: "Studio North",
+                        attendeeCount: 40
                     )
                 ]
             ),
@@ -138,9 +258,17 @@ enum SampleData {
                     Event(
                         title: "Investor Roundtable",
                         category: .meeting,
-                        start: today(11), end: today(12, 30),
+                        start: at(0, 11), end: at(0, 12, 30),
                         host: "Meridian Ventures",
                         attendeeCount: 22
+                    ),
+                    Event(
+                        title: "1:1 Mentor Sessions",
+                        category: .meeting,
+                        start: at(1, 13), end: at(1, 16),
+                        host: "Developer Relations",
+                        attendeeCount: 18,
+                        notes: "Sign up at the registration desk."
                     )
                 ]
             ),
@@ -153,9 +281,16 @@ enum SampleData {
                     Event(
                         title: "Press Briefing",
                         category: .meeting,
-                        start: today(14), end: today(15),
+                        start: at(0, 14), end: at(0, 15),
                         host: "NoVA Tech Council",
                         attendeeCount: 30
+                    ),
+                    Event(
+                        title: "Analyst Briefing",
+                        category: .meeting,
+                        start: at(2, 11), end: at(2, 12),
+                        host: "NoVA Tech Council",
+                        attendeeCount: 25
                     )
                 ]
             ),
@@ -163,7 +298,16 @@ enum SampleData {
                 name: "Meeting Room 3",
                 kind: .meetingRoom,
                 polygon: [CGPoint(x: 0.6927, y: 0.8386), CGPoint(x: 0.7418, y: 0.8386), CGPoint(x: 0.7427, y: 0.7813), CGPoint(x: 0.7045, y: 0.7813), CGPoint(x: 0.7045, y: 0.7731), CGPoint(x: 0.6936, y: 0.769)],
-                capacity: 40
+                capacity: 40,
+                events: [
+                    Event(
+                        title: "Community Organizers Sync",
+                        category: .meeting,
+                        start: at(1, 10), end: at(1, 11),
+                        host: "NoVA Tech Council",
+                        attendeeCount: 16
+                    )
+                ]
             ),
             Space(
                 name: "Meeting Room 4",
@@ -174,10 +318,17 @@ enum SampleData {
                     Event(
                         title: "Recruiting Interviews",
                         category: .meeting,
-                        start: today(9), end: today(17),
+                        start: at(0, 9), end: at(0, 17),
                         host: "People Team",
                         attendeeCount: 8,
                         notes: "Back-to-back 45-minute slots throughout the day."
+                    ),
+                    Event(
+                        title: "Recruiting Interviews",
+                        category: .meeting,
+                        start: at(1, 9), end: at(1, 17),
+                        host: "People Team",
+                        attendeeCount: 8
                     )
                 ]
             ),
@@ -190,9 +341,16 @@ enum SampleData {
                     Event(
                         title: "Executive Board Meeting",
                         category: .meeting,
-                        start: today(9), end: today(11),
+                        start: at(0, 9), end: at(0, 11),
                         host: "Comstock Holdings",
                         attendeeCount: 12
+                    ),
+                    Event(
+                        title: "Sponsor Advisory Council",
+                        category: .meeting,
+                        start: at(1, 15), end: at(1, 16, 30),
+                        host: "NoVA Tech Council",
+                        attendeeCount: 14
                     )
                 ]
             )

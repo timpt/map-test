@@ -89,20 +89,23 @@ struct FloorPlanView: View {
     }
 }
 
-/// A room filled by its event status, sitting under the walls layer.
+/// Shared colors for the two map states. The map answers one question for an
+/// attendee — "is something on in this room right now?" — so rooms are either
+/// `busy` (a session is underway at the viewed time) or `quiet`.
+enum MapStyle {
+    static let busy = Color(red: 0.42, green: 0.65, blue: 0.97)
+    static let quiet = Color.white.opacity(0.55)
+}
+
+/// A room filled by whether it's busy at the viewed time, under the walls layer.
 private struct RoomFill: View {
     let space: Space
     let localPoints: [CGPoint]
+    /// The time the map is currently showing (driven by the scrubber).
     let now: Date
 
-    private var isLive: Bool { !space.liveEvents(at: now).isEmpty }
     private var shape: SpacePolygon { SpacePolygon(points: localPoints) }
-
-    private var fill: Color {
-        if isLive { return Color(red: 0.97, green: 0.84, blue: 0.82) }   // soft red
-        if space.hasEvents { return Color(red: 0.83, green: 0.89, blue: 0.98) } // soft blue
-        return .white                                                     // available
-    }
+    private var fill: Color { space.isBusy(at: now) ? MapStyle.busy : MapStyle.quiet }
 
     var body: some View {
         shape

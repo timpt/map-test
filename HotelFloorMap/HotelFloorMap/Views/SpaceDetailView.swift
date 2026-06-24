@@ -36,9 +36,9 @@ struct SpaceDetailView: View {
                     )
                     .listRowBackground(Color.clear)
                 } else {
-                    eventSection("Happening Now", events: live, accent: .red)
-                    eventSection("Later Today", events: upcoming, accent: .blue)
-                    eventSection("Earlier Today", events: past, accent: .secondary)
+                    eventSection("Happening Now", events: live, accent: .accentColor)
+                    eventSection("Later", events: upcoming, accent: .blue)
+                    eventSection("Earlier", events: past, accent: .secondary)
                 }
             }
             .listStyle(.insetGrouped)
