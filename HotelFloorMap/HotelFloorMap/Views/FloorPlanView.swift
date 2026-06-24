@@ -7,6 +7,8 @@ import SwiftUI
 struct FloorPlanView: View {
     let floor: Floor
     let now: Date
+    /// The currently selected room, highlighted above the walls layer.
+    var selectedSpaceID: Space.ID?
     let onSelect: (Space) -> Void
 
     /// Pixel aspect of the bundled walls image; room polygons are normalized
@@ -43,7 +45,22 @@ struct FloorPlanView: View {
                         .position(x: rect.midX, y: rect.midY)
                         .allowsHitTesting(false)
                 }
+
+                // Selection highlight, drawn above the walls so the accent ring
+                // is never obscured by the wall drawing.
+                if let space = floor.spaces.first(where: { $0.id == selectedSpaceID }) {
+                    let box = space.boundingBox
+                    SelectionHighlight(localPoints: localPoints(for: space, box: box))
+                        .frame(width: box.width * rect.width, height: box.height * rect.height)
+                        .position(
+                            x: rect.minX + box.midX * rect.width,
+                            y: rect.minY + box.midY * rect.height
+                        )
+                        .allowsHitTesting(false)
+                        .transition(.opacity)
+                }
             }
+            .animation(.easeInOut(duration: 0.18), value: selectedSpaceID)
         }
     }
 
@@ -94,7 +111,25 @@ private struct RoomFill: View {
     }
 }
 
+/// An accent ring + soft tint over the selected room, sitting above the walls.
+private struct SelectionHighlight: View {
+    let localPoints: [CGPoint]
+
+    private var shape: SpacePolygon { SpacePolygon(points: localPoints) }
+
+    var body: some View {
+        shape
+            .fill(Color.accentColor.opacity(0.16))
+            .overlay(shape.stroke(Color.accentColor, lineWidth: 3))
+            .shadow(color: Color.accentColor.opacity(0.35), radius: 5)
+    }
+}
+
 #Preview {
-    FloorPlanView(floor: SampleData.venue.floors[0], now: .now) { _ in }
-        .background(Color(red: 0.949, green: 0.941, blue: 0.918))
+    FloorPlanView(
+        floor: SampleData.venue.floors[0],
+        now: .now,
+        selectedSpaceID: SampleData.venue.floors[0].spaces.first?.id
+    ) { _ in }
+    .background(Color(red: 0.949, green: 0.941, blue: 0.918))
 }

@@ -31,6 +31,7 @@ struct VenueFloorPlanView: View {
                     FloorPlanView(
                         floor: selectedFloor,
                         now: now,
+                        selectedSpaceID: selectedSpace?.id,
                         onSelect: { selectedSpace = $0 }
                     )
                 }
