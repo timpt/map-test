@@ -14,6 +14,10 @@ struct VenueFloorPlanView: View {
     @State private var viewingDate: Date = .now
     /// Whether the map is following the live clock (vs a scrubbed time).
     @State private var pinnedToNow = true
+    /// Whether the settings sheet is showing.
+    @State private var showingSettings = false
+    /// User preference: gently pulse rooms that are live right now.
+    @AppStorage(SettingsKey.livePulse) private var livePulseEnabled = true
 
     private let ticker = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
 
@@ -48,7 +52,7 @@ struct VenueFloorPlanView: View {
                         floor: selectedFloor,
                         now: viewingDate,
                         selectedSpaceID: selectedSpace?.id,
-                        emphasizeLive: pinnedToNow,
+                        emphasizeLive: pinnedToNow && livePulseEnabled,
                         onSelect: { selectedSpace = $0 }
                     )
                 }
@@ -77,11 +81,22 @@ struct VenueFloorPlanView: View {
                         FloorPicker(floors: venue.floors, selection: $selectedFloorID, now: viewingDate)
                     }
                 }
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        showingSettings = true
+                    } label: {
+                        Label("Settings", systemImage: "gearshape")
+                    }
+                }
             }
             .sheet(item: $selectedSpace) { space in
                 SpaceDetailView(space: space, now: viewingDate)
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
+            }
+            .sheet(isPresented: $showingSettings) {
+                SettingsView()
+                    .presentationDetents([.medium])
             }
             .onReceive(ticker) { newNow in
                 now = newNow
