@@ -1,16 +1,15 @@
 import SwiftUI
 
-/// Renders the floor as a familiar indoor-map: each room is filled by event
-/// status, and the venue's real walls + labels (a lightened drawing in
-/// `floor.imageName`) are laid over the top, so the map stays geometrically
-/// accurate while reading like a styled indoor map.
+/// Custom, fully app-drawn indoor map: the venue's real building footprint
+/// (derived from the plan, `floor.imageName`) sits on a warm background, with
+/// each room drawn on top as a styled, labeled, status-colored shape.
 struct FloorPlanView: View {
     let floor: Floor
     let now: Date
     let onSelect: (Space) -> Void
 
-    /// Pixel aspect of the bundled walls image; room polygons are normalized
-    /// against this exact frame so fills line up under the walls.
+    /// Pixel aspect of the footprint image; room polygons are normalized against
+    /// this exact frame so they sit correctly inside the building outline.
     private let planAspect: CGFloat = 2766.0 / 1844.0
 
     var body: some View {
@@ -18,10 +17,20 @@ struct FloorPlanView: View {
             let rect = fittedPlanRect(in: proxy.size)
 
             ZStack(alignment: .topLeading) {
-                // Room fills (tappable), beneath the walls.
+                // Building footprint (the "floor"), beneath everything.
+                if let imageName = floor.imageName {
+                    Image(imageName)
+                        .resizable()
+                        .interpolation(.high)
+                        .frame(width: rect.width, height: rect.height)
+                        .position(x: rect.midX, y: rect.midY)
+                        .allowsHitTesting(false)
+                }
+
+                // Rooms drawn on top of the floor.
                 ForEach(floor.spaces) { space in
                     let box = space.boundingBox
-                    RoomFill(
+                    RoomCell(
                         space: space,
                         localPoints: localPoints(for: space, box: box),
                         now: now
@@ -33,21 +42,10 @@ struct FloorPlanView: View {
                     )
                     .onTapGesture { onSelect(space) }
                 }
-
-                // Real walls + labels on top; never intercepts taps.
-                if let imageName = floor.imageName {
-                    Image(imageName)
-                        .resizable()
-                        .interpolation(.high)
-                        .frame(width: rect.width, height: rect.height)
-                        .position(x: rect.midX, y: rect.midY)
-                        .allowsHitTesting(false)
-                }
             }
         }
     }
 
-    /// The aspect-fit rectangle the plan occupies within `size`.
     private func fittedPlanRect(in size: CGSize) -> CGRect {
         var width = size.width
         var height = size.width / planAspect
@@ -63,7 +61,6 @@ struct FloorPlanView: View {
         )
     }
 
-    /// Polygon vertices re-normalized to the space's own bounding box (0...1).
     private func localPoints(for space: Space, box: CGRect) -> [CGPoint] {
         guard box.width > 0, box.height > 0 else { return space.polygon }
         return space.polygon.map {
@@ -72,8 +69,8 @@ struct FloorPlanView: View {
     }
 }
 
-/// A room filled by its event status, sitting under the walls layer.
-private struct RoomFill: View {
+/// A single room: status-colored fill, white separator, centered label.
+private struct RoomCell: View {
     let space: Space
     let localPoints: [CGPoint]
     let now: Date
@@ -82,19 +79,40 @@ private struct RoomFill: View {
     private var shape: SpacePolygon { SpacePolygon(points: localPoints) }
 
     private var fill: Color {
-        if isLive { return Color(red: 0.97, green: 0.84, blue: 0.82) }   // soft red
-        if space.hasEvents { return Color(red: 0.83, green: 0.89, blue: 0.98) } // soft blue
-        return .white                                                     // available
+        if isLive { return Color(red: 0.97, green: 0.81, blue: 0.78) }
+        if space.hasEvents { return Color(red: 0.81, green: 0.88, blue: 0.97) }
+        return .white
+    }
+
+    private var labelColor: Color {
+        if isLive { return Color(red: 0.66, green: 0.21, blue: 0.16) }
+        if space.hasEvents { return Color(red: 0.11, green: 0.31, blue: 0.61) }
+        return Color(red: 0.36, green: 0.36, blue: 0.38)
     }
 
     var body: some View {
         shape
             .fill(fill)
+            .overlay(shape.stroke(.white, style: StrokeStyle(lineWidth: 2.5, lineJoin: .round)))
+            .overlay {
+                VStack(spacing: 2) {
+                    if isLive {
+                        Circle().fill(.red).frame(width: 6, height: 6)
+                    }
+                    Text(space.name)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(labelColor)
+                        .multilineTextAlignment(.center)
+                        .minimumScaleFactor(0.4)
+                        .lineLimit(2)
+                }
+                .padding(3)
+            }
             .contentShape(shape)
     }
 }
 
 #Preview {
     FloorPlanView(floor: SampleData.venue.floors[0], now: .now) { _ in }
-        .background(Color(red: 0.949, green: 0.941, blue: 0.918))
+        .background(Color(red: 0.925, green: 0.918, blue: 0.894))
 }

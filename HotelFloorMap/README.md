@@ -16,12 +16,13 @@ drawing; the events are illustrative sample data.
 1. **Floor plan** (`VenueFloorPlanView`) — the app's root. The real plan drawing
    with a tappable hotspot over each room. **Pinch to zoom and drag to pan**
    (a reset control appears when zoomed). A summary strip shows how many events
-   are scheduled and how many are live right now. Each room is **filled** by
-   status, under the venue's real (lightened) walls + labels — a familiar
-   indoor-map look that stays geometrically accurate:
-   - 🔴 **Red fill** — an event is happening now
-   - 🔵 **Blue fill** — events scheduled today
-   - ⚪️ **White fill** — available
+   are scheduled and how many are live right now. The map is **fully app-drawn**:
+   each room is a styled, labeled, status-colored shape sitting on the venue's
+   real building footprint (derived from the plan) — a clean, custom Apple-style
+   indoor map:
+   - 🔴 **Red** — an event is happening now
+   - 🔵 **Blue** — events scheduled today
+   - ⚪️ **White** — available
 2. **Space detail** (`SpaceDetailView`) — tap any room to open a sheet listing
    that space's events, grouped into *Happening Now*, *Later Today*, and
    *Earlier Today*.
@@ -38,7 +39,7 @@ HotelFloorMap/
 ├── Models/                    Venue, Floor, Space, Event, EventCategory
 ├── Data/SampleData.swift      The venue, its floor, rooms & their events
 ├── Assets.xcassets/
-│   └── floorplanWalls.imageset/  Venue walls + labels, lightened to gray (PNG, from the venue SVG)
+│   └── floorplanFootprint.imageset/  Venue building outline (gray PNG, derived from the plan)
 └── Views/
     ├── VenueFloorPlanView.swift  Root: summary bar, plan, legend
     ├── ZoomPanView.swift         Reusable pinch-zoom + drag-pan container
@@ -56,15 +57,15 @@ to the `HotelFloorMap/` folder are picked up automatically.
 
 ## Design notes
 
-- `FloorPlanView` draws three layers in a fitted rect: a warm background, the
-  per-room **fills** (colored by event status, also the tap targets), and on top
-  the `floor.imageName` image of the real **walls + labels** (lightened to gray,
-  `.allowsHitTesting(false)`). Walls drawn over the fills give crisp, accurate
-  room edges and free, correctly-placed labels.
+- `FloorPlanView` draws, in a fitted rect: a warm background, the building
+  **footprint** image (`floor.imageName`, `.allowsHitTesting(false)`), then each
+  room on top as a `RoomCell` — a status-colored fill with a white separator and
+  a centered app-drawn label. This branch is fully app-drawn (no scanned walls).
+- The footprint PNG is derived from the venue plan by flood-filling the exterior
+  and keeping the interior silhouette (see scratch tooling note below).
 - Each `Space` stores its footprint as a **normalized polygon** (`[CGPoint]`)
-  traced onto that image's (0...1) coordinate space; the same polygon is the
-  fill shape and the hit-test area. (A `rect:` convenience initializer exists for
-  abstract-box venues with no `imageName`.)
+  in that image's (0...1) coordinate space; the same polygon is the fill shape
+  and the hit-test area. (A `rect:` convenience initializer also exists.)
 - All data is in-memory sample data — there is no backend. To show a different
   floor/venue, swap the asset image and replace `SampleData` with your own
   `Venue`/`Floor`/`Space`/`Event` values (polygons traced onto the new image).

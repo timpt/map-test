@@ -35,7 +35,7 @@ struct VenueFloorPlanView: View {
                     )
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color(red: 0.949, green: 0.941, blue: 0.918))
+                .background(Color(red: 0.925, green: 0.918, blue: 0.894))
 
                 LegendBar()
             }
@@ -123,8 +123,8 @@ private struct FloorPicker: View {
 private struct LegendBar: View {
     var body: some View {
         HStack(spacing: 18) {
-            legendItem(color: Color(red: 0.97, green: 0.84, blue: 0.82), label: "Live now")
-            legendItem(color: Color(red: 0.83, green: 0.89, blue: 0.98), label: "Scheduled")
+            legendItem(color: Color(red: 0.97, green: 0.81, blue: 0.78), label: "Live now")
+            legendItem(color: Color(red: 0.81, green: 0.88, blue: 0.97), label: "Scheduled")
             legendItem(color: .white, label: "Available")
         }
         .font(.caption2)
