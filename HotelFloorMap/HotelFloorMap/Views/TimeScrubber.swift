@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// A day selector + time slider that sets the moment the map reflects. Picking a
 /// day or dragging the slider scrubs the "viewing time"; the map and detail sheet
@@ -17,8 +18,11 @@ struct TimeScrubber: View {
     let onScrub: () -> Void
     /// Called when the user taps "Now".
     let onJumpToNow: () -> Void
+    /// When true, the time label sits above the slider instead of beside it.
+    var compact: Bool = false
 
     private let calendar = Calendar.current
+    private let haptic = UIImpactFeedbackGenerator(style: .light)
 
     var body: some View {
         VStack(spacing: 10) {
@@ -28,11 +32,30 @@ struct TimeScrubber: View {
                 nowButton
             }
 
-            HStack(spacing: 12) {
-                Text(timeLabel)
-                    .font(.subheadline.weight(.semibold).monospacedDigit())
-                    .frame(width: 92, alignment: .leading)
-                Slider(value: hourBinding, in: hourRange)
+            if compact {
+                VStack(spacing: 4) {
+                    Text(timeLabel)
+                        .font(.subheadline.weight(.semibold).monospacedDigit())
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Slider(value: hourBinding, in: hourRange, step: 0.5)
+                        .accessibilityLabel("Time")
+                        .accessibilityValue(timeLabel)
+                    SliderTicks(hourRange: hourRange)
+                        .accessibilityHidden(true)
+                }
+            } else {
+                HStack(spacing: 12) {
+                    Text(timeLabel)
+                        .font(.subheadline.weight(.semibold).monospacedDigit())
+                        .frame(width: 92, alignment: .leading)
+                    VStack(spacing: 2) {
+                        Slider(value: hourBinding, in: hourRange, step: 0.5)
+                            .accessibilityLabel("Time")
+                            .accessibilityValue(timeLabel)
+                        SliderTicks(hourRange: hourRange)
+                            .accessibilityHidden(true)
+                    }
+                }
             }
         }
         .padding(.horizontal)
@@ -64,6 +87,8 @@ struct TimeScrubber: View {
                     .foregroundStyle(isSelected ? .white : .primary)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel(day.formatted(.dateTime.weekday(.wide).month().day()))
+                .accessibilityAddTraits(isSelected ? .isSelected : [])
             }
         }
     }
@@ -103,6 +128,7 @@ struct TimeScrubber: View {
                 if let updated = calendar.date(
                     bySettingHour: hour, minute: minute, second: 0, of: selectedDate
                 ) {
+                    if updated != selectedDate { haptic.impactOccurred() }
                     selectedDate = updated
                 }
             }
@@ -118,6 +144,61 @@ struct TimeScrubber: View {
         ) {
             selectedDate = updated
         }
+    }
+}
+
+/// Hour and half-hour tick marks aligned with the slider track.
+private struct SliderTicks: View {
+    let hourRange: ClosedRange<Double>
+
+    /// Approximate inset of the slider thumb center from the view edge.
+    private let thumbInset: CGFloat = 14
+
+    /// Show hour labels at every step to avoid crowding.
+    private var labelStep: Int {
+        let span = Int(hourRange.upperBound - hourRange.lowerBound)
+        if span <= 14 { return 1 }
+        return 2
+    }
+
+    var body: some View {
+        GeometryReader { geo in
+            let trackWidth = geo.size.width - thumbInset * 2
+            let span = hourRange.upperBound - hourRange.lowerBound
+
+            // Tick lines via Canvas (half-hour + hour ticks)
+            Canvas { ctx, size in
+                var h = (ceil(hourRange.lowerBound * 2) / 2)
+                while h <= hourRange.upperBound {
+                    let isWhole = h.truncatingRemainder(dividingBy: 1) == 0
+                    let x = Double(thumbInset) + (h - hourRange.lowerBound) / span * Double(trackWidth)
+                    let tickH: CGFloat = isWhole ? 5 : 3
+                    let rect = CGRect(x: x - 0.5, y: 0, width: 1, height: tickH)
+                    ctx.fill(Path(rect), with: .color(.secondary.opacity(isWhole ? 0.5 : 0.25)))
+                    h += 0.5
+                }
+            }
+            .frame(height: 5)
+
+            // Hour labels
+            let first = Int(ceil(hourRange.lowerBound))
+            let last = Int(hourRange.upperBound)
+            ForEach(Array(stride(from: first, through: last, by: labelStep)), id: \.self) { hour in
+                let x = thumbInset + CGFloat((Double(hour) - hourRange.lowerBound) / span) * trackWidth
+                Text(hourLabel(hour))
+                    .font(.system(size: 9))
+                    .foregroundStyle(.tertiary)
+                    .fixedSize()
+                    .position(x: x, y: 12)
+            }
+        }
+        .frame(height: 18)
+    }
+
+    private func hourLabel(_ h: Int) -> String {
+        let display = h % 12
+        let suffix = h < 12 || h == 24 ? "a" : "p"
+        return "\(display == 0 ? 12 : display)\(suffix)"
     }
 }
 

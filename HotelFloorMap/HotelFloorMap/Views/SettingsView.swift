@@ -1,12 +1,12 @@
 import SwiftUI
 
-/// The key used to persist the live-pulse preference, shared so any view can
-/// read it via `@AppStorage`.
+/// Keys used to persist user preferences, shared so any view can read them
+/// via `@AppStorage`.
 enum SettingsKey {
     static let livePulse = "livePulseEnabled"
 }
 
-/// A small settings sheet for display preferences.
+/// A small settings sheet for map display preferences.
 struct SettingsView: View {
     @AppStorage(SettingsKey.livePulse) private var livePulseEnabled = true
     @Environment(\.dismiss) private var dismiss
@@ -17,7 +17,7 @@ struct SettingsView: View {
                 Section {
                     Toggle("Live pulse", isOn: $livePulseEnabled)
                 } footer: {
-                    Text("Gently fade rooms that have an event on right now. Only animates while the map is following the live clock.")
+                    Text("Gently fade rooms with a session on. Only animates while the map is following the live clock.")
                 }
             }
             .navigationTitle("Settings")

@@ -14,6 +14,8 @@ struct FloorPlanView: View {
     var emphasizeLive: Bool = false
     let onSelect: (Space) -> Void
 
+    @Environment(\.colorScheme) private var colorScheme
+
     /// Pixel aspect of the bundled walls image; room polygons are normalized
     /// against this exact frame so fills line up under the walls.
     private let planAspect: CGFloat = 2766.0 / 1844.0
@@ -37,14 +39,19 @@ struct FloorPlanView: View {
                         x: rect.minX + box.midX * rect.width,
                         y: rect.minY + box.midY * rect.height
                     )
+                    .accessibilityElement()
+                    .accessibilityLabel(space.name)
+                    .accessibilityValue(space.isBusy(at: now) ? "Session on" : "Empty")
+                    .accessibilityHint("Double tap for details")
+                    .accessibilityAddTraits(.isButton)
                     .onTapGesture { onSelect(space) }
                 }
 
                 // Real walls + labels on top; never intercepts taps.
+                // In dark mode the image is color-inverted so walls read as
+                // light lines on a dark background.
                 if let imageName = floor.imageName {
-                    Image(imageName)
-                        .resizable()
-                        .interpolation(.high)
+                    wallsImage(named: imageName)
                         .frame(width: rect.width, height: rect.height)
                         .position(x: rect.midX, y: rect.midY)
                         .allowsHitTesting(false)
@@ -65,6 +72,23 @@ struct FloorPlanView: View {
                 }
             }
             .animation(.easeInOut(duration: 0.18), value: selectedSpaceID)
+        }
+    }
+
+    @ViewBuilder
+    private func wallsImage(named name: String) -> some View {
+        if colorScheme == .dark {
+            Image(name)
+                .resizable()
+                .interpolation(.high)
+                .colorInvert()
+                .brightness(0.15)
+                .shadow(color: .black, radius: 3)
+                .shadow(color: .black.opacity(0.6), radius: 6)
+        } else {
+            Image(name)
+                .resizable()
+                .interpolation(.high)
         }
     }
 
@@ -97,8 +121,23 @@ struct FloorPlanView: View {
 /// attendee — "is something on in this room right now?" — so rooms are either
 /// `busy` (a session is underway at the viewed time) or `quiet`.
 enum MapStyle {
-    static let busy = Color(red: 0.42, green: 0.65, blue: 0.97)
-    static let quiet = Color.white.opacity(0.55)
+    /// #002554 Marriott navy; lightened in dark mode for visibility on the
+    /// dark map background while still letting shadow-haloed labels read.
+    static let busy = Color(UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(red: 0.18, green: 0.35, blue: 0.58, alpha: 0.85)
+            : UIColor(red: 0.73, green: 0.83, blue: 0.95, alpha: 1.0)
+    })
+    static let quiet = Color(UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(white: 0.25, alpha: 0.5)
+            : UIColor(white: 1.0, alpha: 0.55)
+    })
+    static let mapBackground = Color(UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(red: 0.11, green: 0.11, blue: 0.12, alpha: 1.0)
+            : UIColor(red: 0.949, green: 0.941, blue: 0.918, alpha: 1.0)
+    })
 }
 
 /// A room filled by whether it's busy at the viewed time, under the walls layer.
@@ -109,6 +148,8 @@ private struct RoomFill: View {
     let now: Date
     let emphasizeLive: Bool
 
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var pulsing = false
 
     private var isBusy: Bool { space.isBusy(at: now) }
@@ -116,12 +157,16 @@ private struct RoomFill: View {
     private var fill: Color { isBusy ? MapStyle.busy : MapStyle.quiet }
 
     /// Pulse only live-right-now rooms, so a scrubbed snapshot stays static.
-    private var shouldPulse: Bool { isBusy && emphasizeLive }
+    /// Also suppressed when the system Reduce Motion setting is on.
+    private var shouldPulse: Bool { isBusy && emphasizeLive && !reduceMotion }
+
+    /// Gentler pulse in dark mode so inverted text labels stay readable.
+    private var pulseFloor: Double { colorScheme == .dark ? 0.55 : 0.35 }
 
     var body: some View {
         shape
             .fill(fill)
-            .opacity(shouldPulse && pulsing ? 0.65 : 1)
+            .opacity(shouldPulse && pulsing ? pulseFloor : 1)
             .contentShape(shape)
             .onChange(of: shouldPulse, initial: true) { _, active in
                 pulsing = false
@@ -147,11 +192,21 @@ private struct SelectionHighlight: View {
     }
 }
 
-#Preview {
+#Preview("Light") {
     FloorPlanView(
         floor: SampleData.venue.floors[0],
         now: .now,
         selectedSpaceID: SampleData.venue.floors[0].spaces.first?.id
     ) { _ in }
-    .background(Color(red: 0.949, green: 0.941, blue: 0.918))
+    .background(MapStyle.mapBackground)
+}
+
+#Preview("Dark") {
+    FloorPlanView(
+        floor: SampleData.venue.floors[0],
+        now: .now,
+        selectedSpaceID: SampleData.venue.floors[0].spaces.first?.id
+    ) { _ in }
+    .background(MapStyle.mapBackground)
+    .preferredColorScheme(.dark)
 }

@@ -32,12 +32,12 @@ struct SpaceDetailView: View {
                     ContentUnavailableView(
                         "No Events Scheduled",
                         systemImage: "calendar",
-                        description: Text("This space is available all day.")
+                        description: Text("No sessions are planned in this space.")
                     )
                     .listRowBackground(Color.clear)
                 } else {
                     eventSection("Happening Now", events: live, accent: .accentColor)
-                    eventSection("Later", events: upcoming, accent: .blue)
+                    eventSection("Up Next", events: upcoming, accent: .blue)
                     eventSection("Earlier", events: past, accent: .secondary)
                 }
             }
@@ -65,7 +65,7 @@ struct SpaceDetailView: View {
                     }
                 }
             } header: {
-                Label(title, systemImage: title == "Happening Now" ? "dot.radiowaves.left.and.right" : "clock")
+                Label(title, systemImage: title == "Happening Now" ? "dot.radiowaves.left.and.right" : title == "Up Next" ? "arrow.forward.circle" : "clock")
                     .foregroundStyle(accent)
             }
         }
