@@ -1,36 +1,31 @@
 import SwiftUI
 
-/// The app's root screen: an interactive floor plan for a single venue. Pick a
+/// The app's map screen: an interactive floor plan for a single venue. Pick a
 /// floor from the toolbar; pinch to zoom and drag to pan; tap any room/area to
 /// see the events scheduled in it.
 struct VenueFloorPlanView: View {
-    let venue: Venue
+    @Environment(ConferenceStore.self) private var store
 
-    @State private var selectedFloorID: Floor.ID
+    @State private var selectedFloorID: Floor.ID?
     @State private var selectedSpace: Space?
-    /// The real current time, advanced by the ticker.
-    @State private var now: Date = .now
     /// The moment the map reflects — set by the scrubber, defaults to `now`.
     @State private var viewingDate: Date = .now
     /// Whether the map is following the live clock (vs a scrubbed time).
     @State private var pinnedToNow = true
-    /// Whether the settings sheet is showing.
-    @State private var showingSettings = false
     /// User preference: gently pulse rooms that are live right now.
     @AppStorage(SettingsKey.livePulse) private var livePulseEnabled = true
 
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.verticalSizeClass) private var verticalSizeClass
 
-    private let ticker = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
+    private var venue: Venue { store.venue }
 
-    init(venue: Venue) {
-        self.venue = venue
-        _selectedFloorID = State(initialValue: venue.floors.first?.id ?? UUID())
+    private var effectiveFloorID: Floor.ID {
+        selectedFloorID ?? venue.floors.first?.id ?? UUID()
     }
 
     private var selectedFloor: Floor {
-        venue.floors.first { $0.id == selectedFloorID } ?? venue.floors[0]
+        venue.floors.first { $0.id == effectiveFloorID } ?? venue.floors[0]
     }
 
     /// Use a side-panel layout when there is generous horizontal space (iPad) or
@@ -43,44 +38,39 @@ struct VenueFloorPlanView: View {
     private var hourRange: ClosedRange<Double> { 7...19 }
 
     var body: some View {
-        NavigationStack {
-            Group {
-                if useWideLayout {
-                    wideLayout
-                } else {
-                    compactLayout
+        Group {
+            if useWideLayout {
+                wideLayout
+            } else {
+                compactLayout
+            }
+        }
+        .navigationTitle(venue.name)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarVisibility(useWideLayout ? .hidden : .automatic, for: .navigationBar)
+        .toolbar {
+            if venue.floors.count > 1 {
+                ToolbarItem(placement: .topBarTrailing) {
+                    FloorPicker(floors: venue.floors, selection: Binding(
+                        get: { effectiveFloorID },
+                        set: { selectedFloorID = $0 }
+                    ), now: viewingDate)
                 }
             }
-            .navigationTitle(venue.name)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarVisibility(useWideLayout ? .hidden : .automatic, for: .navigationBar)
-            .toolbar {
-                if venue.floors.count > 1 {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        FloorPicker(floors: venue.floors, selection: $selectedFloorID, now: viewingDate)
-                    }
-                }
-                ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        showingSettings = true
-                    } label: {
-                        Label("Settings", systemImage: "gearshape")
-                    }
-                }
+        }
+        .sheet(item: $selectedSpace) { space in
+            SpaceDetailView(space: space, now: viewingDate)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+        }
+        .onAppear {
+            if selectedFloorID == nil {
+                selectedFloorID = venue.floors.first?.id
             }
-            .sheet(item: $selectedSpace) { space in
-                SpaceDetailView(space: space, now: viewingDate)
-                    .presentationDetents([.medium, .large])
-                    .presentationDragIndicator(.visible)
-            }
-            .sheet(isPresented: $showingSettings) {
-                SettingsView()
-                    .presentationDetents([.medium])
-            }
-            .onReceive(ticker) { newNow in
-                now = newNow
-                if pinnedToNow { viewingDate = newNow }
-            }
+            viewingDate = store.now
+        }
+        .onChange(of: store.now) { _, newNow in
+            if pinnedToNow { viewingDate = newNow }
         }
     }
 
@@ -111,14 +101,13 @@ struct VenueFloorPlanView: View {
         VStack(spacing: 0) {
             // Header replacing the navigation bar in wide layout
             HStack {
-                Button { showingSettings = true } label: {
-                    Image(systemName: "gearshape")
-                }
-                Spacer()
                 Text(venue.name).font(.headline)
                 Spacer()
                 if venue.floors.count > 1 {
-                    FloorPicker(floors: venue.floors, selection: $selectedFloorID, now: viewingDate)
+                    FloorPicker(floors: venue.floors, selection: Binding(
+                        get: { effectiveFloorID },
+                        set: { selectedFloorID = $0 }
+                    ), now: viewingDate)
                 }
             }
             .padding(.horizontal)
@@ -135,7 +124,7 @@ struct VenueFloorPlanView: View {
                 onScrub: { pinnedToNow = false },
                 onJumpToNow: {
                     pinnedToNow = true
-                    viewingDate = now
+                    viewingDate = store.now
                 },
                 compact: true
             )
@@ -173,7 +162,7 @@ struct VenueFloorPlanView: View {
             onScrub: { pinnedToNow = false },
             onJumpToNow: {
                 pinnedToNow = true
-                viewingDate = now
+                viewingDate = store.now
             }
         )
     }
@@ -274,19 +263,31 @@ private struct LegendBar: View {
 }
 
 #Preview("Portrait") {
-    VenueFloorPlanView(venue: SampleData.venue)
+    NavigationStack {
+        VenueFloorPlanView()
+    }
+    .environment(ConferenceStore(venue: SampleData.venue))
 }
 
 #Preview("Portrait Dark") {
-    VenueFloorPlanView(venue: SampleData.venue)
-        .preferredColorScheme(.dark)
+    NavigationStack {
+        VenueFloorPlanView()
+    }
+    .environment(ConferenceStore(venue: SampleData.venue))
+    .preferredColorScheme(.dark)
 }
 
 #Preview("Landscape", traits: .landscapeLeft) {
-    VenueFloorPlanView(venue: SampleData.venue)
+    NavigationStack {
+        VenueFloorPlanView()
+    }
+    .environment(ConferenceStore(venue: SampleData.venue))
 }
 
 #Preview("Landscape Dark", traits: .landscapeLeft) {
-    VenueFloorPlanView(venue: SampleData.venue)
-        .preferredColorScheme(.dark)
+    NavigationStack {
+        VenueFloorPlanView()
+    }
+    .environment(ConferenceStore(venue: SampleData.venue))
+    .preferredColorScheme(.dark)
 }
